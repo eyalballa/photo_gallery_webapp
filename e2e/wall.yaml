@@ -1,0 +1,10 @@
+# Config for the wall e2e/run.sh starts (not named config.yaml, which .gitignore keeps private). Photos come from
+# --source fake:/photos (backend/golden/input), not an album.
+event:
+  title: "E2E wall"
+  login_title: "E2E login"
+  qr_url: "https://example.com/join"
+  album_url: "https://example.com/album"
+sync:
+  every_s: 10
+data_dir: data

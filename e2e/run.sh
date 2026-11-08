@@ -24,10 +24,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
+# a missing bind-mount source becomes an empty directory, and the app dies on it
+[ -f "$ROOT/e2e/wall.yaml" ] || { echo "missing $ROOT/e2e/wall.yaml" >&2; exit 1; }
 docker network create "$NAME" >/dev/null
 docker run -d --name "$NAME" --network "$NAME" --network-alias wall \
   -e PASSCODE="$PASSCODE" -e SESSION_SECRET="$(printf 'e2e%.0s' {1..16})" -e COOKIE_SECURE=false \
-  -v "$ROOT/e2e/config.yaml:/app/backend/config.yaml:ro" \
+  -v "$ROOT/e2e/wall.yaml:/app/backend/config.yaml:ro" \
   -v "$ROOT/backend/golden/input:/photos:ro" \
   "$APP" python -m wall --source fake:/photos serve --host 0.0.0.0 >/dev/null
 
