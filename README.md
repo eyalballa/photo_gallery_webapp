@@ -18,7 +18,10 @@ cp .env.example .env                  # set PASSCODE and SESSION_SECRET
 cd backend && uv sync && uv run python -m wall --config ../config.yaml serve
 ```
 
-Then open http://127.0.0.1:8000. Tests: `cd backend && uv run pytest`, `cd frontend && pnpm test`.
+Then open http://127.0.0.1:8000.
+
+Tests run inside the image, as in CI: `docker build --target web-test .` (frontend) and
+`docker build --target test .` (backend). Locally without Docker: `cd backend && uv run pytest`, `cd frontend && pnpm test`.
 
 ## Caveats
 
