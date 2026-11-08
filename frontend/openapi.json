@@ -346,12 +346,6 @@
             "type": "boolean",
             "title": "Decorations"
           },
-          "max_on_screen": {
-            "type": "integer",
-            "maximum": 4.0,
-            "minimum": 1.0,
-            "title": "Max On Screen"
-          },
           "crossing_seconds": {
             "type": "integer",
             "maximum": 60.0,
@@ -377,7 +371,6 @@
           "theme",
           "background",
           "decorations",
-          "max_on_screen",
           "crossing_seconds",
           "new_marker",
           "effect_labels"

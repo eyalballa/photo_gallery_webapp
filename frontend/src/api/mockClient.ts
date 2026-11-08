@@ -36,7 +36,7 @@ export class MockWallClient implements WallClient {
       kind: "ok",
       config: {
         title: "Happy 8th Birthday John!", qr_url: "https://photos.app.goo.gl/example", theme: "kids", background: null,
-        decorations: true, max_on_screen: 4, crossing_seconds: 24, new_marker: true, effect_labels: {},
+        decorations: true, crossing_seconds: 24, new_marker: true, effect_labels: {},
       },
     };
   }

@@ -6,11 +6,12 @@ import { initialState, prune, seed, tick, withBaseline, type SchedulerEnv, type 
 
 const TICK_MS = 250;
 const SEED_WAIT_MS = 4000;
+/** Photos decoded before the first frame: enough to fill even a wide screen with narrow (portrait) cards. */
+const SEED_PHOTOS = 8;
 
 interface Props {
   photos: WallPhoto[];
   loaded: boolean;
-  maxOnScreen: number;
   crossingSeconds: number;
   newLabel: string | null;
   headerRef: RefObject<HTMLElement | null>;
@@ -27,13 +28,13 @@ function viewport(header: HTMLElement | null): Viewport {
 }
 
 /** Runs the scheduler on a timer; React re-renders only when a card enters or leaves. */
-export function CardsLayer({ photos, loaded, maxOnScreen, crossingSeconds, newLabel, headerRef }: Props) {
+export function CardsLayer({ photos, loaded, crossingSeconds, newLabel, headerRef }: Props) {
   const loader = useMemo(() => new ImageLoader(), []);
   const state = useRef<SchedulerState>(initialState(Math.random() < 0.5));
   const phase = useRef<{ baselined: boolean; seeded: boolean; loadedAt: number }>({ baselined: false, seeded: false, loadedAt: 0 });
   const [shown, setShown] = useState<ShownCard[]>([]);
-  const latest = useRef({ photos, maxOnScreen, crossingSeconds });
-  latest.current = { photos, maxOnScreen, crossingSeconds };
+  const latest = useRef({ photos, crossingSeconds });
+  latest.current = { photos, crossingSeconds };
 
   const commit = useCallback((next: SchedulerState, added: ShownCard[] = []) => {
     const prev = state.current;
@@ -52,10 +53,10 @@ export function CardsLayer({ photos, loaded, maxOnScreen, crossingSeconds, newLa
     if (!loaded) return;
     const step = () => {
       const now = performance.now();
-      const { photos: all, maxOnScreen: max, crossingSeconds: crossing } = latest.current;
+      const { photos: all, crossingSeconds: crossing } = latest.current;
       const usable = all.filter((p) => !loader.isFailing(p.url, now));
       const byId = new Map(all.map((p) => [p.id, p]));
-      const env: SchedulerEnv = { now, viewport: viewport(headerRef.current), maxOnScreen: max, crossingSeconds: crossing, rng: Math.random };
+      const env: SchedulerEnv = { now, viewport: viewport(headerRef.current), crossingSeconds: crossing, rng: Math.random };
       const ph = phase.current;
       let s = prune(state.current, now, new Set(byId.keys()));
 
@@ -73,10 +74,10 @@ export function CardsLayer({ photos, loaded, maxOnScreen, crossingSeconds, newLa
         });
 
       if (!ph.seeded) {
-        const candidates = usable.slice(0, max + 1);
+        const candidates = usable.slice(0, SEED_PHOTOS);
         candidates.forEach((p) => loader.load(p.url));
         const ready = usable.filter((p) => loader.isReady(p.url));
-        const enough = ready.length >= Math.min(max, usable.length);
+        const enough = ready.length >= Math.min(SEED_PHOTOS, usable.length);
         if (usable.length === 0 || (!enough && now - ph.loadedAt < SEED_WAIT_MS)) return commit(s);
         ph.seeded = true;
         const seeded = seed(s, ready, env);

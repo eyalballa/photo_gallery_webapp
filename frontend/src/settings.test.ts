@@ -4,19 +4,19 @@ import { parseOverrides, resolveSettings } from "./settings";
 
 const config: WallConfig = {
   title: "Happy 8th Birthday John!", qr_url: "https://photos.app.goo.gl/x", theme: "kids", background: "space",
-  decorations: true, max_on_screen: 4, crossing_seconds: 24, new_marker: true, effect_labels: {},
+  decorations: true, crossing_seconds: 24, new_marker: true, effect_labels: {},
 };
 
 describe("resolveSettings", () => {
   it("uses config defaults when nothing is overridden", () => {
     expect(resolveSettings(config, {}, false)).toEqual({
-      theme: "kids", background: "space", crossingSeconds: 24, maxOnScreen: 4, decorations: true, newMarker: true,
+      theme: "kids", background: "space", crossingSeconds: 24, decorations: true, newMarker: true,
     });
   });
 
   it("applies local overrides on top, clamped to the config's ranges", () => {
-    const s = resolveSettings(config, { crossingSeconds: 5, maxOnScreen: 9, decorations: false }, false);
-    expect([s.crossingSeconds, s.maxOnScreen, s.decorations]).toEqual([8, 4, false]);
+    const s = resolveSettings(config, { crossingSeconds: 5, decorations: false }, false);
+    expect([s.crossingSeconds, s.decorations]).toEqual([8, false]);
   });
 
   it("falls back to the theme default for a background the theme doesn't allow", () => {

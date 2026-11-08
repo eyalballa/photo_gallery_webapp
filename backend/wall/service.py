@@ -45,7 +45,6 @@ class WallService:
             theme=c.display.theme,
             background=c.display.background,
             decorations=c.display.decorations,
-            max_on_screen=c.display.max_on_screen,
             crossing_seconds=c.display.crossing_seconds,
             new_marker=c.display.new_marker,
             effect_labels={eid: e.label for eid, e in sorted(EFFECTS.items())},

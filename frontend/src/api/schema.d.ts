@@ -174,8 +174,6 @@ export interface components {
             background: string | null;
             /** Decorations */
             decorations: boolean;
-            /** Max On Screen */
-            max_on_screen: number;
             /** Crossing Seconds */
             crossing_seconds: number;
             /** New Marker */

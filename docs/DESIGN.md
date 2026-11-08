@@ -265,7 +265,6 @@ class WallConfig(BaseModel):
     theme: Literal["kids", "grown", "roses"]
     background: str | None
     decorations: bool
-    max_on_screen: int = Field(ge=1, le=4)
     crossing_seconds: int = Field(ge=8, le=60)
     new_marker: bool
     effect_labels: dict[str, str]
@@ -308,7 +307,6 @@ display:
   theme: kids              # kids | grown | roses
   background: null         # null = theme default; or confetti, party-night, velvet, …
   decorations: true        # balloons
-  max_on_screen: 4
   crossing_seconds: 24
   new_marker: true
 effects:
@@ -389,7 +387,7 @@ backgrounds share a `canvasBackground({setup, frame})` helper (DPR capped at 1.5
 
 - **Size:** usable band = from below the header to 97% of the height. Image height ≈ 56% of the band (±5%), polaroid padding 4.5% on the sides and 20% at the bottom.
 - **Motion:** one shared speed `v = (viewportW + 0.7·viewportH) / crossing_seconds`, so cards never catch up with each other. If the speed goes up (settings drawer, resize), a new card waits until it can't catch the last one before that one leaves.
-- **Spawning:** a new card enters when (a) fewer than `max_on_screen` are on screen and (b) the previous card has fully entered plus a 4% gap.
+- **Spawning:** a new card enters when the previous card has fully entered plus a 4% gap. There's no maximum count: spacing alone decides, so the number of photos on screen follows the screen's width and the photos' shapes (more narrow portrait cards fit than wide landscape ones). A fixed `max_on_screen` was removed because it left holes when narrow cards needed more than the maximum to fill the screen.
 - **Vertical position:** alternates between the top 25% and the bottom 25% of the band's slack.
 - **Queue:** `isNew desc, shownCount asc, random`. `shownCount` is kept in memory, and `isNew` means it arrived after this browser session started and hasn't been shown yet (photos already in the album at startup aren't new). The picked next photo is kept across ticks while it still ranks first, and pre-decoded before its slot opens. Photos that are removed or currently on screen are excluded.
 - **Startup:** cards are placed mid-flight, so the first frame is a full wall.

@@ -18,7 +18,7 @@ import {
 const vp: Viewport = { width: 1600, height: 1000, headerBottom: 80 };
 const half = () => 0.5;
 const env = (over: Partial<SchedulerEnv> = {}): SchedulerEnv => ({
-  now: 0, viewport: vp, maxOnScreen: 4, crossingSeconds: 23, rng: half, ...over,
+  now: 0, viewport: vp, crossingSeconds: 23, rng: half, ...over,
 });
 const photo = (id: string): WallPhoto => ({
   id, url: `/media/${id}.jpg?v=1`, width: 1000, height: 1000, aged: false, version: 1, firstSeen: "2026-11-06T12:00:00Z",
@@ -82,8 +82,10 @@ describe("geometry", () => {
 });
 
 describe("canSpawn", () => {
-  it("refuses when max cards are on screen", () => {
-    expect(canSpawn([card({}), card({ startedAt: -60000 })], env({ maxOnScreen: 2, now: 60000 }))).toBe(false);
+  it("goes by spacing alone, however many cards are already on screen", () => {
+    // Five narrow cards; the last one's trailing edge (800 + 300) is past the 1536 entry line.
+    const narrow = [-100, 125, 350, 575, 800].map((x0) => card({ x0, layout: { ...card({}).layout, cardW: 300 } }));
+    expect(canSpawn(narrow, env())).toBe(true);
   });
 
   it("waits until the last card has fully entered plus a 4% gap", () => {
@@ -143,10 +145,11 @@ describe("tick", () => {
 });
 
 describe("seed", () => {
-  it("places cards mid-flight from 3% of the width with 4% gaps, up to 80%", () => {
-    const photos = ["a", "b", "c", "d", "e"].map(photo);
+  it("places cards mid-flight from 3% of the width with 4% gaps, up to the right edge", () => {
+    // Narrow (3:4) cards: 409 px wide + a 64 px gap. The fourth starts at 1468, past the old 80% cut-off (1280).
+    const photos = ["a", "b", "c", "d", "e"].map((id) => ({ ...photo(id), width: 750 }));
     const state = seed(initialState(true), photos, env());
-    expect(state.cards.map((c) => Math.round(c.x0))).toEqual([48, 643, 1238]);
+    expect(state.cards.map((c) => Math.round(c.x0))).toEqual([48, 521, 994, 1468]);
   });
 });
 

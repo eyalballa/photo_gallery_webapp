@@ -21,7 +21,6 @@ export interface SchedulerState {
 export interface SchedulerEnv {
   now: number;
   viewport: Viewport;
-  maxOnScreen: number;
   crossingSeconds: number;
   rng: Rng;
 }
@@ -88,11 +87,12 @@ export function cardDurationMs(card: CardState): number {
   return ((card.x0 - card.x1) / card.v) * 1000;
 }
 
-/** Fewer than max on screen, and the last card has fully entered plus a 4% gap.
+/** The last card has fully entered plus a 4% gap. Spacing alone decides, so how many photos are on
+ * screen follows the screen's width and the photos' shapes: a fixed maximum left holes whenever narrow
+ * (portrait) cards needed more than the maximum to fill the screen.
  * If the speed went up since the last card entered (settings drawer, resize), also wait until the
  * new card can't catch it before it leaves the screen. */
 export function canSpawn(cards: readonly CardState[], env: SchedulerEnv): boolean {
-  if (cards.length >= env.maxOnScreen) return false;
   const last = cards[cards.length - 1];
   if (!last) return true;
   const gap = env.viewport.width * GAP_FRACTION;
@@ -163,12 +163,13 @@ export function tick(
   return { type: "spawn", ...createCard(s, env, photo, env.viewport.width + ENTRY_OFFSET_PX) };
 }
 
-/** Startup: place cards mid-flight from 3% to 80% of the width so the first frame is a full wall. */
+/** Startup: place cards mid-flight from 3% of the width to the right edge so the first frame is a full wall.
+ * (Stopping at 80% left a hole of up to a quarter of the screen until it scrolled away.) */
 export function seed(state: SchedulerState, photos: readonly WallPhoto[], env: SchedulerEnv): SchedulerState {
   const gap = env.viewport.width * GAP_FRACTION;
   let x = env.viewport.width * 0.03;
   let next = state;
-  while (x < env.viewport.width * 0.8 && next.cards.length < env.maxOnScreen) {
+  while (x < env.viewport.width) {
     const { photo, state: picked } = pickNext(next, photos, env.rng);
     if (!photo) break;
     const made = createCard(picked, env, photo, x);
