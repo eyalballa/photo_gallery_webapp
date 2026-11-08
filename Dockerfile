@@ -7,9 +7,10 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm build
 
-# Frontend tests (CI: docker build --target web-test .); `pnpm build` above already type-checked
+# Frontend unit tests: docker build --target web-test -t photo-wall-web-test . && docker run --rm photo-wall-web-test
+# (`pnpm build` above already type-checked)
 FROM web AS web-test
-RUN pnpm test
+CMD ["pnpm", "test"]
 
 # Stage 2: the Python server, with the MediaPipe model baked in (backend/models/)
 FROM python:3.12-slim AS app
@@ -31,11 +32,12 @@ EXPOSE 8000
 # loopback only: Tailscale Serve (same network namespace) is the one way in
 CMD ["python", "-m", "wall", "serve", "--host", "127.0.0.1"]
 
-# Backend tests against the runtime image plus dev dependencies (CI: docker build --target test .)
+# Backend unit tests, and the e2e runner (e2e/run.sh): the runtime image plus dev dependencies
+# docker build --target test -t photo-wall-test . && docker run --rm photo-wall-test
 FROM app AS test
 RUN uv sync --frozen --no-install-project
 COPY backend/tests ./tests
-RUN pytest -q
+CMD ["pytest", "-q"]
 
 # The default target: the runtime image
 FROM app

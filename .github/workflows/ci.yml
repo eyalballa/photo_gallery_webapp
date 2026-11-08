@@ -8,24 +8,70 @@ on:
 permissions:
   contents: read
 
-# Tests run inside the image (the Dockerfile's web-test and test stages), so they see exactly what ships.
+# Build the images once, then test those exact images: unit tests run inside them, e2e tests drive the app image
+# over HTTP (e2e/run.sh).
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
-      - name: Frontend tests
+      - name: App image
         uses: docker/build-push-action@v6
         with:
           context: .
-          target: web-test
+          tags: photo-wall:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Backend tests
+      - name: Backend test image
         uses: docker/build-push-action@v6
         with:
           context: .
           target: test
+          tags: photo-wall-test:latest
+          load: true
+          cache-from: type=gha
+      - name: Frontend test image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: web-test
+          tags: photo-wall-web-test:latest
+          load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Save images
+        run: docker save photo-wall:latest photo-wall-test:latest photo-wall-web-test:latest | gzip -1 > images.tar.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: images
+          path: images.tar.gz
+          retention-days: 1
+          compression-level: 0
+
+  unit:
+    name: unit tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+      - run: gunzip -c images.tar.gz | docker load
+      - name: Backend
+        run: docker run --rm photo-wall-test:latest
+      - name: Frontend
+        run: docker run --rm photo-wall-web-test:latest
+
+  e2e:
+    name: e2e tests
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v4
+        with:
+          name: images
+      - run: gunzip -c images.tar.gz | docker load
+      - run: e2e/run.sh photo-wall:latest photo-wall-test:latest

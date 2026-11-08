@@ -18,3 +18,4 @@ config.yaml
 policy-backup-*.hujson
 .claude
 deploy
+e2e

@@ -20,8 +20,19 @@ cd backend && uv sync && uv run python -m wall --config ../config.yaml serve
 
 Then open http://127.0.0.1:8000.
 
-Tests run inside the image, as in CI: `docker build --target web-test .` (frontend) and
-`docker build --target test .` (backend). Locally without Docker: `cd backend && uv run pytest`, `cd frontend && pnpm test`.
+## Tests
+
+CI builds the images first, then tests them; locally:
+
+```sh
+docker build -t photo-wall . && docker build --target test -t photo-wall-test . \
+  && docker build --target web-test -t photo-wall-web-test .
+docker run --rm photo-wall-test        # backend unit tests
+docker run --rm photo-wall-web-test    # frontend unit tests
+e2e/run.sh                             # end to end: the app image over HTTP, real face model, golden photos
+```
+
+Without Docker: `cd backend && uv run pytest`, `cd frontend && pnpm test`.
 
 ## Caveats
 
