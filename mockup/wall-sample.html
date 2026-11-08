@@ -1,0 +1,1174 @@
+<title>John's Birthday Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600&family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Manrope:wght@400;500;600&display=swap">
+<style>
+/* Layout: full-bleed projection stage. Layers bottom→top: background scene, decorations, drifting photos, header band (title + QR), settings drawer.
+   Two looks share one structure: body[data-look="kids"] (playful) and body[data-look="grown"] (young adult). */
+:root {
+  --ink: #0e1230;
+  --paper: #fbf7ee;
+  --paper-aged: #efe2c4;
+  --coral: #ff5d73;
+  --sun: #ffc145;
+  --sky: #4cc9f0;
+  --mint: #7ae582;
+  --grape: #b388ff;
+  --text: #f4f2ff;
+  --muted: #a9a8cf;
+  --accent: var(--sun);
+  --panel: rgba(14, 18, 48, 0.94);
+  --line: rgba(169, 168, 207, 0.22);
+  --font-display: "Lilita One", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif;
+  --font-ui: "Fredoka", "Avenir Next", system-ui, sans-serif;
+  --tilt-k: 1;
+  --bob-k: 1;
+  color-scheme: dark;
+}
+body[data-look="grown"] {
+  --ink: #120c16;
+  --paper: #f5f1ea;
+  --paper-aged: #e9dcc3;
+  --text: #f2ece4;
+  --muted: #a99ca6;
+  --accent: #e3c193;
+  --panel: rgba(18, 12, 22, 0.95);
+  --line: rgba(227, 193, 147, 0.2);
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-ui: "Manrope", "Avenir Next", system-ui, sans-serif;
+  --tilt-k: 0.6;
+  --bob-k: 0.8;
+}
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--font-ui);
+  overflow: hidden;
+}
+#stage { position: fixed; inset: 0; overflow: hidden; }
+#bg, #decor, #wall { position: absolute; inset: 0; }
+#bg canvas { display: block; width: 100%; height: 100%; }
+#bg .img-bg { position: absolute; inset: 0; background-size: cover; background-position: center; }
+#bg .img-bg::after { content: ""; position: absolute; inset: 0; background: rgba(8, 8, 20, 0.35); }
+#decor { pointer-events: none; z-index: 1; }
+#wall { z-index: 2; }
+
+/* Header band */
+.header {
+  position: absolute; z-index: 3; top: 0; left: 0; right: 0;
+  display: grid; grid-template-columns: var(--qr-w) 1fr var(--qr-w); align-items: center; gap: 2vw;
+  padding: 2.2vh max(16px, 2.5vw) 0;
+  --qr-w: clamp(64px, 11vh, 140px);
+  pointer-events: none;
+}
+.header h1 {
+  grid-column: 2;
+  margin: 0; text-align: center;
+  font-family: var(--font-display); font-weight: 400;
+  font-size: clamp(26px, min(6.4vw, 10vh), 120px);
+  line-height: 1.05; letter-spacing: 0.01em; text-wrap: balance;
+  text-shadow: 0 0.07em 0 rgba(0, 0, 0, 0.35), 0 0 0.6em rgba(0, 0, 0, 0.35);
+}
+.header h1 .word { display: inline-block; white-space: nowrap; margin: 0 0.12em; }
+.header h1 .ch { display: inline-block; animation: wave 3.4s ease-in-out infinite; animation-delay: calc(var(--i) * 90ms); }
+@keyframes wave { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-0.07em) } }
+body[data-look="grown"] .header h1 {
+  font-size: clamp(28px, min(6vw, 9.5vh), 116px);
+  font-weight: 800; letter-spacing: -0.01em;
+  text-shadow: 0 0.04em 0.4em rgba(0, 0, 0, 0.5);
+}
+body[data-look="grown"] .header h1::after {
+  content: ""; display: block; width: 3.2em; height: 1px; margin: 0.18em auto 0;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+}
+.qr {
+  grid-column: 3; justify-self: end;
+  width: var(--qr-w);
+  background: #fff; color: #0e1230; border-radius: 10px; padding: 6px 6px 4px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  text-align: center; transform: rotate(calc(10deg * var(--tilt-k) * 0.3));
+}
+body[data-look="grown"] .qr { border-radius: 4px; transform: none; }
+.qr canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+.qr span { display: block; font: 600 clamp(8px, 1.3vh, 14px)/1.2 var(--font-ui); padding-top: 3px; }
+
+/* Photos */
+.card { position: absolute; left: 0; top: 0; will-change: transform; }
+.card .bob { animation: bob var(--bob-dur) ease-in-out infinite alternate; animation-delay: var(--bob-delay); }
+@keyframes bob {
+  from { transform: translateY(calc(-1.4vh * var(--bob-k))) rotate(calc(var(--r1) * var(--tilt-k))); }
+  to   { transform: translateY(calc(1.4vh * var(--bob-k))) rotate(calc(var(--r2) * var(--tilt-k))); }
+}
+.photo {
+  position: relative; margin: 0;
+  padding: var(--pad) var(--pad) var(--pad-b);
+  background: var(--paper);
+  border-radius: 3px;
+  box-shadow: 0 2.5vh 5vh rgba(0, 0, 0, 0.5), 0 0.3vh 0.8vh rgba(0, 0, 0, 0.35);
+}
+.photo.aged { background: var(--paper-aged); }
+.photo img { display: block; max-width: none; }
+.photo .tag {
+  position: absolute; left: 0; right: 0; bottom: 0; height: var(--pad-b);
+  display: flex; align-items: center; justify-content: center;
+  font: 500 clamp(10px, 1.8vh, 18px)/1 var(--font-ui); color: #7d7768; letter-spacing: 0.03em;
+  visibility: hidden;
+}
+body.show-tags .photo .tag { visibility: visible; }
+.sticker {
+  position: absolute; top: -4%; right: -4%;
+  width: 18%; aspect-ratio: 1; max-width: 100%;
+  display: grid; place-items: center;
+  background: var(--sun); color: #0e1230;
+  font: 400 clamp(12px, 3vh, 34px)/1 var(--font-display);
+  clip-path: polygon(50% 0%, 61% 18%, 82% 10%, 80% 32%, 100% 38%, 86% 55%, 98% 75%, 76% 77%, 72% 100%, 54% 86%, 36% 100%, 30% 79%, 8% 80%, 16% 59%, 0% 42%, 19% 33%, 15% 11%, 37% 17%);
+  transform: rotate(14deg);
+}
+body[data-look="grown"] .sticker {
+  top: 3%; right: 3%; width: auto; aspect-ratio: auto;
+  clip-path: none; transform: none; border-radius: 999px;
+  padding: 0.7vh 1.2vh;
+  background: var(--accent); color: #120c16;
+  font: 600 clamp(10px, 1.6vh, 18px)/1 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase;
+}
+
+/* Settings drawer */
+.gear {
+  position: fixed; z-index: 9; left: max(14px, env(safe-area-inset-left, 0px)); bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--panel); color: var(--text);
+  font-size: 22px; cursor: pointer; opacity: 0.25; transition: opacity 0.2s;
+}
+.gear:hover, .gear:focus-visible { opacity: 1; }
+.hint {
+  position: fixed; z-index: 9; left: 70px; bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  font-size: 14px; color: var(--muted); transition: opacity 1s;
+}
+#panel {
+  position: fixed; z-index: 10; top: 0; bottom: 0; left: 0;
+  width: min(360px, 92vw); overflow-y: auto;
+  background: var(--panel); backdrop-filter: blur(10px);
+  border-right: 1px solid var(--line);
+  padding-block: calc(20px + env(safe-area-inset-top, 0px)) 24px;
+  padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: 20px;
+  box-sizing: border-box;
+  transform: translateX(-105%); transition: transform 0.3s ease;
+  display: flex; flex-direction: column; gap: 22px;
+}
+#panel.open { transform: none; }
+#panel header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+#panel h2 { margin: 0; font: 400 26px/1.1 var(--font-display); }
+#panel h3 { margin: 0 0 10px; font: 600 12px/1 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+#panel p.note { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.45; }
+#panel section { display: flex; flex-direction: column; }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt { position: relative; }
+.opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.opt span {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+  font-size: 14px; cursor: pointer;
+}
+.opt span i { width: 18px; height: 18px; border-radius: 5px; flex: none; }
+.opt input:checked + span { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.opt input:focus-visible + span { outline: 2px solid var(--sky); outline-offset: 2px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 15px; }
+.row + .row { border-top: 1px solid var(--line); }
+.row small { color: var(--muted); font-size: 12px; }
+.row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); }
+.row input[type="range"] { width: 130px; accent-color: var(--accent); }
+.row input:disabled + * , .row input:disabled { opacity: 0.4; }
+.row output { font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; color: var(--muted); font-size: 13px; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  font: 500 14px/1 var(--font-ui); color: #120c16; background: var(--accent);
+  border: 0; border-radius: 999px; padding: 10px 14px; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+.btn:focus-visible, .gear:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+.file-label { font-size: 13px; color: var(--muted); display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.stats { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .header h1 .ch, .card .bob { animation: none; }
+}
+</style>
+
+<div id="stage">
+  <div id="bg"></div>
+  <div id="decor"></div>
+  <div id="wall"></div>
+  <div class="header" id="header">
+    <h1 id="title"></h1>
+    <div class="qr" aria-label="Sample QR code for joining the album">
+      <canvas id="qr" width="29" height="29"></canvas>
+      <span id="qr-caption">Add your photos!</span>
+    </div>
+  </div>
+</div>
+
+<button class="gear" id="gear" aria-label="Open settings" aria-controls="panel" aria-expanded="false">⚙</button>
+<div class="hint" id="hint">Press S for settings · F for fullscreen</div>
+
+<aside id="panel" aria-label="Wall settings">
+  <header>
+    <h2>Wall settings</h2>
+    <button class="btn ghost" id="close">Close</button>
+  </header>
+  <p class="note">This is a sample. In the real app these values come from the config file. Each theme, background and effect is a plug-in registered by id.</p>
+
+  <section>
+    <h3>Theme</h3>
+    <div class="opts" id="theme-opts"></div>
+  </section>
+
+  <section>
+    <h3>Background</h3>
+    <div class="opts" id="bg-opts"></div>
+    <label class="file-label" for="bg-file">Use your own image
+      <input type="file" id="bg-file" accept="image/*">
+    </label>
+  </section>
+
+  <section>
+    <h3>Effects for photos with people</h3>
+    <div id="fx-opts"></div>
+    <div class="btns" style="margin-top:10px">
+      <button class="btn ghost" id="reroll">Re-roll effects</button>
+    </div>
+  </section>
+
+  <section>
+    <h3>Wall</h3>
+    <div class="row"><label for="max">Photos on screen (max)</label><input type="range" id="max" min="2" max="4" step="1" value="4"><output id="max-out">4</output></div>
+    <div class="row"><label for="speed">Seconds to cross</label><input type="range" id="speed" min="12" max="40" step="1" value="24"><output id="speed-out">24 s</output></div>
+    <div class="row"><label for="decor-on">Decorations <small id="decor-name">(balloons)</small></label><input type="checkbox" id="decor-on" checked></div>
+    <div class="row"><label for="tags">Show effect names <small>(debug)</small></label><input type="checkbox" id="tags"></div>
+  </section>
+
+  <section>
+    <h3>Try it</h3>
+    <div class="btns">
+      <button class="btn" id="upload">Simulate a guest upload</button>
+      <button class="btn ghost" id="fs">Fullscreen</button>
+    </div>
+    <p class="stats" id="stats" style="margin-top:10px"></p>
+  </section>
+</aside>
+
+<script>
+/* ============================================================
+   Config: what the real app reads from its config file
+   ============================================================ */
+const CONFIG = {
+  title: "Happy 8th Birthday John!",
+  theme: "kids",          // "kids" | "grown"
+  background: null,       // null = the theme's default
+  maxOnScreen: 4,
+  crossingSeconds: 24,
+  decorations: true,
+};
+
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const PALETTE = ["#ff5d73", "#ffc145", "#4cc9f0", "#7ae582", "#b388ff"];
+const PALETTE_RGB = PALETTE.map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+const rand = (a, b) => a + Math.random() * (b - a);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function mulberry32(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+const pickR = (rng, a) => a[Math.floor(rng() * a.length)];
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+/* ============================================================
+   Background registry
+   A background is { id, label, themes, swatch, mount(host), unmount() }.
+   Adding one = one registerBackground() call.
+   ============================================================ */
+const Backgrounds = new Map();
+function registerBackground(bg) { Backgrounds.set(bg.id, bg); }
+
+function canvasBackground({ id, label, themes, swatch, setup, frame }) {
+  let raf, canvas, onResize, state;
+  return {
+    id, label, themes, swatch,
+    mount(host) {
+      canvas = document.createElement("canvas");
+      host.appendChild(canvas);
+      const ctx = canvas.getContext("2d");
+      onResize = () => {
+        const d = Math.min(devicePixelRatio || 1, 1.5);
+        canvas.width = host.clientWidth * d;
+        canvas.height = host.clientHeight * d;
+        ctx.setTransform(d, 0, 0, d, 0, 0);
+        state = setup(host.clientWidth, host.clientHeight);
+      };
+      onResize();
+      addEventListener("resize", onResize);
+      let last = performance.now();
+      const loop = t => {
+        const dt = Math.min((t - last) / 1000, 0.05) * (REDUCED ? 0.15 : 1);
+        last = t;
+        frame(ctx, state, host.clientWidth, host.clientHeight, t / 1000, dt);
+        raf = requestAnimationFrame(loop);
+      };
+      raf = requestAnimationFrame(loop);
+    },
+    unmount() {
+      cancelAnimationFrame(raf);
+      removeEventListener("resize", onResize);
+      canvas.remove();
+    },
+  };
+}
+
+/* ---- Kids backgrounds ---- */
+registerBackground(canvasBackground({
+  id: "party-night", label: "Party night", themes: ["kids"], swatch: "linear-gradient(135deg,#1b2160,#0e1230)",
+  setup(w, h) {
+    return Array.from({ length: 46 }, () => ({
+      x: rand(0, w), y: rand(0, h), r: rand(24, 130),
+      c: pick(PALETTE_RGB), a: rand(0.06, 0.16),
+      vx: rand(-6, 6), vy: rand(-10, -2), ph: rand(0, 6.28),
+    }));
+  },
+  frame(ctx, dots, w, h, t, dt) {
+    const g = ctx.createRadialGradient(w * 0.5, h * 0.1, 0, w * 0.5, h * 0.4, Math.max(w, h));
+    g.addColorStop(0, "#252c70"); g.addColorStop(1, "#0b0e26");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.globalCompositeOperation = "lighter";
+    for (const d of dots) {
+      d.x += d.vx * dt; d.y += d.vy * dt;
+      if (d.y < -d.r) { d.y = h + d.r; d.x = rand(0, w); }
+      if (d.x < -d.r) d.x = w + d.r; else if (d.x > w + d.r) d.x = -d.r;
+      const a = d.a * (0.6 + 0.4 * Math.sin(t * 0.7 + d.ph));
+      const rg = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r);
+      rg.addColorStop(0, `rgba(${d.c},${a})`); rg.addColorStop(0.7, `rgba(${d.c},${a * 0.6})`); rg.addColorStop(1, `rgba(${d.c},0)`);
+      ctx.fillStyle = rg; ctx.beginPath(); ctx.arc(d.x, d.y, d.r, 0, 6.283); ctx.fill();
+    }
+    ctx.globalCompositeOperation = "source-over";
+  },
+}));
+
+registerBackground(canvasBackground({
+  id: "confetti", label: "Confetti", themes: ["kids", "grown"], swatch: "linear-gradient(135deg,#ff5d73,#ffc145 50%,#4cc9f0)",
+  setup(w, h) {
+    return Array.from({ length: 150 }, () => ({
+      x: rand(0, w), y: rand(-h, h), w: rand(6, 12), h: rand(10, 18),
+      rot: rand(0, 6.28), vr: rand(-2, 2), vy: rand(30, 70), ph: rand(0, 6.28), c: pick(theme.palette),
+    }));
+  },
+  frame(ctx, ps, w, h, t, dt) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#2b1055"); g.addColorStop(1, "#130a2c");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    ctx.globalAlpha = 0.7;
+    for (const p of ps) {
+      p.y += p.vy * dt; p.x += Math.sin(t + p.ph) * 25 * dt; p.rot += p.vr * dt;
+      if (p.y > h + 20) { p.y = -20; p.x = rand(0, w); }
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.scale(1, Math.cos(t * 2 + p.ph));
+      ctx.fillStyle = p.c; ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); ctx.restore();
+    }
+    ctx.globalAlpha = 1;
+  },
+}));
+
+registerBackground(canvasBackground({
+  id: "space", label: "Outer space", themes: ["kids"], swatch: "radial-gradient(circle at 70% 30%,#b388ff,#0d0b2e 60%)",
+  setup(w, h) {
+    return {
+      stars: Array.from({ length: 280 }, () => ({ x: rand(0, w), y: rand(0, h), s: rand(0.5, 2), ph: rand(0, 6.28) })),
+      planet: { x: w * 0.12, y: h * 0.85, r: Math.min(w, h) * 0.22 },
+      shoot: null, nextShoot: 4,
+    };
+  },
+  frame(ctx, st, w, h, t, dt) {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, "#05061a"); g.addColorStop(1, "#140f3d");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    for (const s of st.stars) {
+      ctx.globalAlpha = 0.45 + 0.55 * Math.abs(Math.sin(t * 0.8 + s.ph));
+      ctx.fillStyle = "#fff"; ctx.fillRect(s.x, s.y, s.s, s.s);
+    }
+    ctx.globalAlpha = 1;
+    const p = st.planet;
+    p.x += 3 * dt;
+    if (p.x - p.r * 1.8 > w) p.x = -p.r * 1.8;
+    const pg = ctx.createRadialGradient(p.x - p.r * 0.4, p.y - p.r * 0.4, p.r * 0.1, p.x, p.y, p.r);
+    pg.addColorStop(0, "#c9a7ff"); pg.addColorStop(1, "#4b2a8a");
+    ctx.fillStyle = pg; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    ctx.strokeStyle = "rgba(255,193,69,.55)"; ctx.lineWidth = p.r * 0.07;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y, p.r * 1.7, p.r * 0.38, -0.25, 0, 6.283); ctx.stroke();
+    st.nextShoot -= dt;
+    if (!st.shoot && st.nextShoot <= 0) st.shoot = { x: rand(w * 0.4, w), y: rand(0, h * 0.4), life: 1 };
+    if (st.shoot) {
+      const s = st.shoot;
+      s.x -= 700 * dt; s.y += 260 * dt; s.life -= dt * 1.2;
+      const lg = ctx.createLinearGradient(s.x, s.y, s.x + 140, s.y - 52);
+      lg.addColorStop(0, `rgba(255,255,255,${Math.max(s.life, 0)})`); lg.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.strokeStyle = lg; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(s.x, s.y); ctx.lineTo(s.x + 140, s.y - 52); ctx.stroke();
+      if (s.life <= 0) { st.shoot = null; st.nextShoot = rand(5, 10); }
+    }
+  },
+}));
+
+registerBackground(canvasBackground({
+  id: "sea", label: "Under the sea", themes: ["kids"], swatch: "linear-gradient(180deg,#1680a8,#04263a)",
+  setup(w, h) {
+    return Array.from({ length: 70 }, () => ({ x: rand(0, w), y: rand(0, h), r: rand(3, 14), vy: rand(15, 45), ph: rand(0, 6.28) }));
+  },
+  frame(ctx, bubbles, w, h, t, dt) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#0e5f80"); g.addColorStop(1, "#03202f");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < 6; i++) {
+      const x = w * (i + 0.5) / 6 + Math.sin(t * 0.3 + i) * 40;
+      ctx.fillStyle = "rgba(180,240,255,0.05)";
+      ctx.beginPath(); ctx.moveTo(x - 30, 0); ctx.lineTo(x + 30, 0); ctx.lineTo(x + 160, h); ctx.lineTo(x - 60, h); ctx.fill();
+    }
+    ctx.lineWidth = 1.5;
+    for (const b of bubbles) {
+      b.y -= b.vy * dt; b.x += Math.sin(t * 1.5 + b.ph) * 12 * dt;
+      if (b.y < -b.r) { b.y = h + b.r; b.x = rand(0, w); }
+      ctx.strokeStyle = "rgba(255,255,255,0.35)";
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.stroke();
+      ctx.fillStyle = "rgba(255,255,255,0.4)";
+      ctx.beginPath(); ctx.arc(b.x - b.r * 0.35, b.y - b.r * 0.35, b.r * 0.22, 0, 6.283); ctx.fill();
+    }
+  },
+}));
+
+/* ---- Young adult backgrounds ---- */
+registerBackground(canvasBackground({
+  id: "velvet", label: "Velvet", themes: ["grown"], swatch: "radial-gradient(circle at 30% 30%,#a8546a,#2c2f6b 55%,#120c16)",
+  setup(w, h) {
+    const cols = [[110, 46, 102], [168, 84, 106], [44, 47, 107], [138, 90, 43], [80, 40, 120]];
+    return cols.map((c, i) => ({ c, ph: i * 1.3, r: Math.max(w, h) * rand(0.35, 0.55), ax: rand(0.15, 0.35), ay: rand(0.1, 0.3), cx: rand(0.2, 0.8), cy: rand(0.2, 0.8) }));
+  },
+  frame(ctx, blobs, w, h, t) {
+    ctx.fillStyle = "#120c16"; ctx.fillRect(0, 0, w, h);
+    for (const b of blobs) {
+      const x = w * (b.cx + Math.sin(t * 0.04 + b.ph) * b.ax), y = h * (b.cy + Math.cos(t * 0.05 + b.ph) * b.ay);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, b.r);
+      g.addColorStop(0, `rgba(${b.c},0.42)`); g.addColorStop(1, `rgba(${b.c},0)`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
+  },
+}));
+
+registerBackground(canvasBackground({
+  id: "champagne", label: "Champagne", themes: ["grown"], swatch: "radial-gradient(circle at 50% 80%,#e3c193,#17101c 60%)",
+  setup(w, h) {
+    return Array.from({ length: 110 }, () => ({ x: rand(0, w), y: rand(0, h), r: rand(0.8, 2.4), vy: rand(6, 20), ph: rand(0, 6.28) }));
+  },
+  frame(ctx, ps, w, h, t, dt) {
+    const g = ctx.createLinearGradient(0, 0, 0, h);
+    g.addColorStop(0, "#0c080f"); g.addColorStop(1, "#21151d");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const glow = ctx.createRadialGradient(w / 2, h * 1.1, 0, w / 2, h * 1.1, h * 0.9);
+    glow.addColorStop(0, "rgba(227,193,147,.16)"); glow.addColorStop(1, "rgba(227,193,147,0)");
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
+    for (const p of ps) {
+      p.y -= p.vy * dt; p.x += Math.sin(t * 0.6 + p.ph) * 4 * dt;
+      if (p.y < -4) { p.y = h + 4; p.x = rand(0, w); }
+      ctx.fillStyle = `rgba(232,201,160,${0.25 + 0.45 * Math.abs(Math.sin(t * 0.9 + p.ph))})`;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, 6.283); ctx.fill();
+    }
+  },
+}));
+
+registerBackground(canvasBackground({
+  id: "film", label: "Film night", themes: ["grown"], swatch: "linear-gradient(135deg,#6b3a22,#1c1512 50%,#0d0a09)",
+  setup() {
+    const n = document.createElement("canvas"); n.width = n.height = 160;
+    const nctx = n.getContext("2d"), img = nctx.createImageData(160, 160);
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 16; }
+    nctx.putImageData(img, 0, 0);
+    return { noise: n, pattern: null };
+  },
+  frame(ctx, st, w, h, t) {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    g.addColorStop(0, "#22180f"); g.addColorStop(1, "#0b0908");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    const leak = ctx.createRadialGradient(w * 1.02, h * 0.1, 0, w * 1.02, h * 0.1, w * 0.55);
+    leak.addColorStop(0, `rgba(230,120,60,${0.2 + 0.07 * Math.sin(t * 0.5)})`); leak.addColorStop(1, "rgba(230,120,60,0)");
+    ctx.fillStyle = leak; ctx.fillRect(0, 0, w, h);
+    st.pattern = st.pattern || ctx.createPattern(st.noise, "repeat");
+    const ox = Math.random() * 160, oy = Math.random() * 160;
+    ctx.save(); ctx.translate(-ox, -oy); ctx.fillStyle = st.pattern; ctx.fillRect(0, 0, w + 160, h + 160); ctx.restore();
+  },
+}));
+
+/* ---- Shared: the viewer's own image ---- */
+const customBackground = {
+  id: "custom", label: "Your image", themes: ["kids", "grown"], swatch: "repeating-linear-gradient(45deg,#a9a8cf 0 4px,#1b2160 4px 8px)", url: null, el: null,
+  mount(host) {
+    this.el = document.createElement("div");
+    this.el.className = "img-bg";
+    if (this.url) this.el.style.backgroundImage = `url("${this.url}")`;
+    host.appendChild(this.el);
+  },
+  unmount() { this.el.remove(); },
+};
+registerBackground(customBackground);
+
+/* ============================================================
+   Theme registry
+   A theme bundles look tokens (CSS under body[data-look]), title rendering,
+   default background, decorations and copy. Backgrounds list the themes they fit.
+   ============================================================ */
+const Themes = new Map();
+function registerTheme(t) { Themes.set(t.id, t); }
+
+registerTheme({
+  id: "kids", label: "Kids party", swatch: "linear-gradient(135deg,#ff5d73,#ffc145,#4cc9f0)",
+  defaultBackground: "party-night", decor: "balloons",
+  palette: PALETTE,
+  newLabel: "NEW", qrCaption: "Add your photos!",
+  renderTitle(h1, text) {
+    let i = 0;
+    h1.innerHTML = text.split(" ").map(word =>
+      `<span class="word" aria-hidden="true">${[...word].map(ch => `<span class="ch" style="--i:${i};color:${PALETTE[i++ % PALETTE.length]}">${ch}</span>`).join("")}</span>`
+    ).join(" ");
+  },
+});
+registerTheme({
+  id: "grown", label: "Young adult", swatch: "linear-gradient(135deg,#e3c193,#a8546a,#120c16)",
+  defaultBackground: "velvet", decor: "balloons",
+  palette: ["#e3c193", "#c97b84", "#f5f1ea", "#b08d57", "#8e5a7a"],
+  newLabel: "Just added", qrCaption: "Scan to add photos",
+  renderTitle(h1, text) { h1.textContent = text; },
+});
+
+/* ============================================================
+   Effect registry
+   An effect is { id, label, weight, apply(ctx, photo, rng) → variant name }.
+   The real app runs these on the backend, once per photo, with faces
+   from the face-landmark model; here faces come from the sample scenes.
+   ============================================================ */
+const Effects = [];
+function registerEffect(e) { Effects.push(e); }
+
+function onEachFace(ctx, photo, fn) {
+  for (const f of photo.faces) {
+    ctx.save(); ctx.translate(f.cx, f.cy); ctx.rotate(f.tilt); fn(f.r); ctx.restore();
+  }
+}
+function heartPath(ctx, x, y, s) {
+  ctx.moveTo(x, y + 0.6 * s);
+  ctx.bezierCurveTo(x - 1.15 * s, y - 0.1 * s, x - 0.6 * s, y - 1.05 * s, x, y - 0.45 * s);
+  ctx.bezierCurveTo(x + 0.6 * s, y - 1.05 * s, x + 1.15 * s, y - 0.1 * s, x, y + 0.6 * s);
+}
+function starPath(ctx, x, y, R, ri) {
+  for (let i = 0; i < 10; i++) {
+    const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? ri : R;
+    ctx[i ? "lineTo" : "moveTo"](x + Math.cos(a) * rr, y + Math.sin(a) * rr);
+  }
+  ctx.closePath();
+}
+function temples(ctx, r, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = 0.05 * r;
+  ctx.beginPath();
+  ctx.moveTo(0.62 * r, -0.1 * r); ctx.lineTo(0.98 * r, -0.17 * r);
+  ctx.moveTo(-0.62 * r, -0.1 * r); ctx.lineTo(-0.98 * r, -0.17 * r);
+  ctx.stroke();
+}
+
+const GLASSES = {
+  round(ctx, r) {
+    temples(ctx, r, "#151515");
+    ctx.lineWidth = 0.075 * r; ctx.strokeStyle = "#151515"; ctx.fillStyle = "rgba(170,210,255,.28)";
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.36 * r, -0.08 * r, 0.26 * r, 0, 6.283); ctx.fill(); ctx.stroke(); }
+    ctx.beginPath(); ctx.arc(0, -0.04 * r, 0.11 * r, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+  },
+  heart(ctx, r) {
+    temples(ctx, r, "#c2185b");
+    ctx.fillStyle = "rgba(255,61,127,.9)"; ctx.strokeStyle = "#c2185b"; ctx.lineWidth = 0.045 * r;
+    for (const s of [-1, 1]) { ctx.beginPath(); heartPath(ctx, s * 0.37 * r, -0.04 * r, 0.3 * r); ctx.fill(); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(-0.12 * r, -0.14 * r); ctx.lineTo(0.12 * r, -0.14 * r); ctx.stroke();
+  },
+  star(ctx, r) {
+    temples(ctx, r, "#d99a00");
+    ctx.fillStyle = "#ffd23f"; ctx.strokeStyle = "#d99a00"; ctx.lineWidth = 0.045 * r;
+    for (const s of [-1, 1]) { ctx.beginPath(); starPath(ctx, s * 0.37 * r, -0.07 * r, 0.36 * r, 0.16 * r); ctx.fill(); ctx.stroke(); }
+    ctx.fillStyle = "rgba(255,255,255,.55)";
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.37 * r - 0.06 * r, -0.12 * r, 0.04 * r, 0, 6.283); ctx.fill(); }
+  },
+  aviator(ctx, r) {
+    temples(ctx, r, "#b8912a");
+    for (const s of [-1, 1]) {
+      const g = ctx.createLinearGradient(0, -0.3 * r, 0, 0.15 * r);
+      g.addColorStop(0, "rgba(20,30,45,.95)"); g.addColorStop(1, "rgba(70,105,140,.9)");
+      ctx.fillStyle = g; ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 0.04 * r;
+      ctx.beginPath(); ctx.ellipse(s * 0.36 * r, -0.05 * r, 0.29 * r, 0.23 * r, s * 0.18, 0, 6.283); ctx.fill(); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 0.03 * r;
+      ctx.beginPath(); ctx.moveTo(s * 0.26 * r, -0.17 * r); ctx.lineTo(s * 0.44 * r, -0.12 * r); ctx.stroke();
+    }
+    ctx.strokeStyle = "#d4af37"; ctx.lineWidth = 0.035 * r;
+    ctx.beginPath(); ctx.moveTo(-0.1 * r, -0.2 * r); ctx.lineTo(0.1 * r, -0.2 * r); ctx.moveTo(-0.08 * r, -0.12 * r); ctx.lineTo(0.08 * r, -0.12 * r); ctx.stroke();
+  },
+};
+
+const MUSTACHES = {
+  handlebar(ctx, u) {
+    ctx.beginPath();
+    ctx.moveTo(0, -0.06 * u);
+    ctx.bezierCurveTo(0.12 * u, -0.14 * u, 0.3 * u, -0.12 * u, 0.42 * u, -0.02 * u);
+    ctx.bezierCurveTo(0.5 * u, 0.04 * u, 0.6 * u, 0.02 * u, 0.62 * u, -0.1 * u);
+    ctx.bezierCurveTo(0.68 * u, 0.04 * u, 0.56 * u, 0.15 * u, 0.42 * u, 0.09 * u);
+    ctx.bezierCurveTo(0.3 * u, 0.05 * u, 0.14 * u, 0.07 * u, 0, 0.06 * u);
+    ctx.closePath(); ctx.fill();
+  },
+  walrus(ctx, u) {
+    ctx.beginPath();
+    ctx.moveTo(0, -0.1 * u);
+    ctx.bezierCurveTo(0.22 * u, -0.2 * u, 0.5 * u, -0.1 * u, 0.55 * u, 0.22 * u);
+    const fringe = [[0.46, 0.16], [0.4, 0.26], [0.32, 0.17], [0.24, 0.27], [0.16, 0.18], [0.08, 0.26], [0, 0.18]];
+    for (const [x, y] of fringe) ctx.lineTo(x * u, y * u);
+    ctx.closePath(); ctx.fill();
+  },
+  chevron(ctx, u) {
+    ctx.beginPath();
+    ctx.moveTo(0, -0.08 * u);
+    ctx.quadraticCurveTo(0.3 * u, -0.14 * u, 0.44 * u, 0.12 * u);
+    ctx.quadraticCurveTo(0.25 * u, 0.06 * u, 0, 0.08 * u);
+    ctx.closePath(); ctx.fill();
+  },
+};
+
+registerEffect({
+  id: "glasses", label: "Funny glasses", weight: 25,
+  apply(ctx, photo, rng) {
+    const v = pickR(rng, Object.keys(GLASSES));
+    onEachFace(ctx, photo, r => GLASSES[v](ctx, r));
+    return v;
+  },
+});
+
+registerEffect({
+  id: "mustache", label: "Mustache", weight: 25,
+  apply(ctx, photo, rng) {
+    const v = pickR(rng, Object.keys(MUSTACHES));
+    const color = pickR(rng, ["#24160e", "#3b2416", "#8a4b1f"]);
+    onEachFace(ctx, photo, r => {
+      ctx.translate(0, 0.3 * r); ctx.fillStyle = color;
+      ctx.shadowColor = "rgba(0,0,0,.25)"; ctx.shadowBlur = 0.04 * r; ctx.shadowOffsetY = 0.02 * r;
+      MUSTACHES[v](ctx, r); ctx.scale(-1, 1); MUSTACHES[v](ctx, r);
+    });
+    return v;
+  },
+});
+
+registerEffect({
+  id: "party-hat", label: "Party hat", weight: 25,
+  apply(ctx, photo, rng) {
+    onEachFace(ctx, photo, r => {
+      const [c1, c2] = [pickR(rng, PALETTE), pickR(rng, PALETTE)];
+      ctx.translate(0.05 * r, -0.82 * r); ctx.rotate((rng() - 0.5) * 0.5);
+      const hw = 0.52 * r, hh = 1.3 * r;
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(hw, 0); ctx.lineTo(0, -hh); ctx.closePath();
+      ctx.fillStyle = c1; ctx.fill(); ctx.clip();
+      ctx.fillStyle = c2 === c1 ? "#fff" : c2;
+      for (let y = -hh; y < 0; y += 0.3 * r) {
+        ctx.beginPath(); ctx.moveTo(-hw, y); ctx.lineTo(hw, y - 0.25 * r); ctx.lineTo(hw, y - 0.12 * r); ctx.lineTo(-hw, y + 0.13 * r); ctx.fill();
+      }
+      ctx.restore();
+      ctx.fillStyle = "#fff";
+      for (let x = -hw; x <= hw; x += 0.13 * r) { ctx.beginPath(); ctx.arc(x, 0, 0.08 * r, 0, 6.283); ctx.fill(); }
+      for (let i = 0; i < 7; i++) {
+        const a = i / 7 * 6.283;
+        ctx.fillStyle = i % 2 ? "#fff" : "#ffd23f";
+        ctx.beginPath(); ctx.arc(Math.cos(a) * 0.09 * r, -hh + Math.sin(a) * 0.09 * r, 0.09 * r, 0, 6.283); ctx.fill();
+      }
+    });
+    return null;
+  },
+});
+
+registerEffect({
+  id: "vintage", label: "Vintage", weight: 25, agesPaper: true,
+  apply(ctx, photo, rng) {
+    const { width: w, height: h } = photo;
+    const img = ctx.getImageData(0, 0, w, h), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const r = d[i], g = d[i + 1], b = d[i + 2];
+      let sr = 0.393 * r + 0.769 * g + 0.189 * b, sg = 0.349 * r + 0.686 * g + 0.168 * b, sb = 0.272 * r + 0.534 * g + 0.131 * b;
+      sr = sr * 0.88 + 240 * 0.12; sg = sg * 0.88 + 224 * 0.12; sb = sb * 0.88 + 196 * 0.12;
+      const n = (rng() - 0.5) * 30;
+      d[i] = Math.min(255, sr * 0.92 + n); d[i + 1] = Math.min(255, sg * 0.92 + n); d[i + 2] = Math.min(255, sb * 0.92 + n);
+    }
+    ctx.putImageData(img, 0, 0);
+    const m = Math.max(w, h);
+    const v = ctx.createRadialGradient(w / 2, h / 2, m * 0.3, w / 2, h / 2, m * 0.75);
+    v.addColorStop(0, "rgba(40,20,0,0)"); v.addColorStop(1, "rgba(40,20,0,.6)");
+    ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = "rgba(255,245,220,.18)"; ctx.lineWidth = 1;
+    for (let i = 0; i < 6; i++) {
+      const x = rng() * w; ctx.beginPath(); ctx.moveTo(x, rng() * h * 0.3); ctx.lineTo(x + (rng() - 0.5) * 20, h * (0.6 + rng() * 0.4)); ctx.stroke();
+    }
+    return null;
+  },
+});
+
+/* ============================================================
+   Sample album: stand-ins for photos from the Google Photos album
+   ============================================================ */
+function rr(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
+
+function makeKid(rng, cx, cy, r) {
+  return {
+    cx, cy, r, tilt: (rng() - 0.5) * 0.3,
+    skin: pickR(rng, ["#f6d3b3", "#e8b48e", "#c98e63", "#8d5a3b", "#f1c7a1"]),
+    hair: pickR(rng, ["#2b1b10", "#5a3a1e", "#d9a441", "#1b1b1b", "#a0522d"]),
+    hairStyle: Math.floor(rng() * 4),
+    shirt: pickR(rng, PALETTE),
+    mouthOpen: rng() > 0.5,
+  };
+}
+function drawKid(ctx, k) {
+  const { cx, cy, r } = k;
+  ctx.fillStyle = k.shirt; rr(ctx, cx - 1.15 * r, cy + 0.8 * r, 2.3 * r, 3 * r, 0.7 * r); ctx.fill();
+  ctx.fillStyle = k.skin; ctx.fillRect(cx - 0.25 * r, cy + 0.55 * r, 0.5 * r, 0.4 * r);
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(k.tilt);
+  ctx.fillStyle = k.hair;
+  if (k.hairStyle === 3) { rr(ctx, -1.12 * r, -0.5 * r, 2.24 * r, 1.6 * r, 0.5 * r); ctx.fill(); }
+  ctx.fillStyle = k.skin;
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.98 * r, 0.05 * r, 0.18 * r, 0, 6.283); ctx.fill(); }
+  ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.283); ctx.fill();
+  const sh = ctx.createRadialGradient(-0.3 * r, -0.3 * r, 0.1 * r, 0, 0, r);
+  sh.addColorStop(0, "rgba(255,255,255,.15)"); sh.addColorStop(1, "rgba(0,0,0,.12)");
+  ctx.fillStyle = sh; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.283); ctx.fill();
+  ctx.fillStyle = k.hair;
+  ctx.beginPath(); ctx.ellipse(0, -0.42 * r, 1.04 * r, 0.66 * r, 0, Math.PI, 0); ctx.fill();
+  if (k.hairStyle === 1) for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.95 * r, -0.55 * r, 0.36 * r, 0, 6.283); ctx.fill(); }
+  if (k.hairStyle === 2) for (let a = Math.PI * 1.02; a < Math.PI * 1.98; a += 0.22) { ctx.beginPath(); ctx.arc(Math.cos(a) * 0.92 * r, Math.sin(a) * 0.92 * r - 0.05 * r, 0.25 * r, 0, 6.283); ctx.fill(); }
+  ctx.strokeStyle = k.hair; ctx.lineWidth = 0.06 * r; ctx.lineCap = "round";
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.36 * r, -0.16 * r, 0.14 * r, Math.PI * 1.25, Math.PI * 1.75); ctx.stroke(); }
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = "#1d1410"; ctx.beginPath(); ctx.arc(s * 0.36 * r, -0.08 * r, 0.1 * r, 0, 6.283); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s * 0.36 * r + 0.03 * r, -0.11 * r, 0.035 * r, 0, 6.283); ctx.fill();
+  }
+  ctx.fillStyle = "rgba(255,110,110,.3)";
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 0.58 * r, 0.22 * r, 0.13 * r, 0, 6.283); ctx.fill(); }
+  ctx.strokeStyle = "rgba(90,40,25,.5)"; ctx.lineWidth = 0.045 * r;
+  ctx.beginPath(); ctx.arc(0, 0.08 * r, 0.08 * r, 0.2 * Math.PI, 0.8 * Math.PI); ctx.stroke();
+  if (k.mouthOpen) {
+    ctx.fillStyle = "#7a1f2b"; ctx.beginPath(); ctx.arc(0, 0.3 * r, 0.28 * r, 0.08 * Math.PI, 0.92 * Math.PI); ctx.closePath(); ctx.fill();
+  } else {
+    ctx.strokeStyle = "#5b2a1e"; ctx.lineWidth = 0.06 * r;
+    ctx.beginPath(); ctx.arc(0, 0.24 * r, 0.32 * r, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  }
+  ctx.restore();
+}
+function bunting(ctx, w, y0) {
+  const n = 11, sag = 30;
+  ctx.strokeStyle = "rgba(60,40,30,.6)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, y0); ctx.quadraticCurveTo(w / 2, y0 + sag * 2, w, y0); ctx.stroke();
+  for (let i = 0; i < n; i++) {
+    const x1 = i * w / n + 6, x2 = (i + 1) * w / n - 6, yAt = x => y0 + sag * 4 * (x / w) * (1 - x / w);
+    ctx.fillStyle = PALETTE[i % PALETTE.length];
+    ctx.beginPath(); ctx.moveTo(x1, yAt(x1)); ctx.lineTo(x2, yAt(x2)); ctx.lineTo((x1 + x2) / 2, yAt((x1 + x2) / 2) + 46); ctx.fill();
+  }
+}
+function lightWash(ctx, w, h) {
+  const g = ctx.createLinearGradient(0, 0, w, h);
+  g.addColorStop(0, "rgba(255,255,255,.22)"); g.addColorStop(1, "rgba(0,0,0,.12)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+}
+function balloon(ctx, x, y, rx, color) {
+  ctx.fillStyle = color; ctx.beginPath(); ctx.ellipse(x, y, rx, rx * 1.2, 0, 0, 6.283); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.ellipse(x - rx * 0.35, y - rx * 0.45, rx * 0.2, rx * 0.32, -0.5, 0, 6.283); ctx.fill();
+}
+
+const SCENES = {
+  group(seed) {
+    const rng = mulberry32(seed), W = 960, H = 720;
+    const n = 1 + Math.floor(rng() * 3);
+    const r = [0, 150, 125, 105][n];
+    const kids = Array.from({ length: n }, (_, i) => makeKid(rng, W * (i + 1) / (n + 1) + (rng() - 0.5) * 40, H * 0.5 + (rng() - 0.5) * 50, r * (0.9 + rng() * 0.2)));
+    const wall = pickR(rng, ["#ffe8d6", "#d8f3dc", "#e0e7ff", "#fde2e4", "#fff3b0"]);
+    return {
+      width: W, height: H, faces: kids,
+      draw(ctx) {
+        ctx.fillStyle = wall; ctx.fillRect(0, 0, W, H);
+        bunting(ctx, W, 40);
+        kids.forEach(k => drawKid(ctx, k));
+        lightWash(ctx, W, H);
+      },
+    };
+  },
+  portrait(seed) {
+    const rng = mulberry32(seed), W = 720, H = 900;
+    const kid = makeKid(rng, W / 2, H * 0.47, 190);
+    const [a, b] = [pickR(rng, ["#bde0fe", "#ffd6a5", "#caffbf"]), pickR(rng, ["#ffc6ff", "#fdffb6", "#9bf6ff"])];
+    return {
+      width: W, height: H, faces: [kid],
+      draw(ctx) {
+        const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, a); g.addColorStop(1, b);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        balloon(ctx, 110, 150, 70, PALETTE[0]); balloon(ctx, 620, 120, 60, PALETTE[2]); balloon(ctx, 560, 230, 50, PALETTE[1]);
+        drawKid(ctx, kid);
+        lightWash(ctx, W, H);
+      },
+    };
+  },
+  cake(seed) {
+    const W = 960, H = 720;
+    return {
+      width: W, height: H, faces: [],
+      draw(ctx) {
+        const rng = mulberry32(seed);
+        ctx.fillStyle = "#3a2433"; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#7a4a33"; ctx.fillRect(0, H * 0.72, W, H);
+        ctx.fillStyle = "#f5f5f5"; ctx.beginPath(); ctx.ellipse(W / 2, H * 0.72, 290, 40, 0, 0, 6.283); ctx.fill();
+        ctx.fillStyle = "#f7a8c4"; ctx.fillRect(W / 2 - 230, H * 0.5, 460, H * 0.22);
+        ctx.fillStyle = "#fff1e6"; ctx.fillRect(W / 2 - 165, H * 0.36, 330, H * 0.14);
+        for (let x = W / 2 - 230; x <= W / 2 + 230; x += 26) { ctx.beginPath(); ctx.arc(x, H * 0.5, 16, 0, Math.PI); ctx.fill(); }
+        for (let i = 0; i < 60; i++) { ctx.fillStyle = pickR(rng, PALETTE); ctx.fillRect(W / 2 - 220 + rng() * 440, H * 0.53 + rng() * H * 0.17, 8, 3); }
+        ctx.fillStyle = "#ff5d73"; ctx.font = "bold 120px 'Arial Black', sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillText("8", W / 2, H * 0.62);
+        for (let i = 0; i < 8; i++) {
+          const x = W / 2 - 140 + i * 40, y = H * 0.36;
+          ctx.fillStyle = PALETTE[i % 5]; ctx.fillRect(x - 6, y - 60, 12, 60);
+          const glow = ctx.createRadialGradient(x, y - 78, 0, x, y - 78, 50);
+          glow.addColorStop(0, "rgba(255,200,90,.6)"); glow.addColorStop(1, "rgba(255,200,90,0)");
+          ctx.fillStyle = glow; ctx.beginPath(); ctx.arc(x, y - 78, 50, 0, 6.283); ctx.fill();
+          ctx.fillStyle = "#ffe08a"; ctx.beginPath(); ctx.ellipse(x, y - 76, 7, 14, 0, 0, 6.283); ctx.fill();
+        }
+        const v = ctx.createRadialGradient(W / 2, H * 0.4, 100, W / 2, H * 0.5, 650);
+        v.addColorStop(0, "rgba(255,170,80,.12)"); v.addColorStop(1, "rgba(0,0,0,.55)");
+        ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+      },
+    };
+  },
+  balloons(seed) {
+    const W = 720, H = 900;
+    return {
+      width: W, height: H, faces: [],
+      draw(ctx) {
+        const rng = mulberry32(seed);
+        const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, "#7cc8f5"); g.addColorStop(1, "#e6f7ff");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "rgba(255,255,255,.85)";
+        for (let i = 0; i < 4; i++) { const x = rng() * W, y = rng() * H * 0.5; for (let j = 0; j < 5; j++) { ctx.beginPath(); ctx.arc(x + j * 30, y + Math.sin(j) * 10, 34, 0, 6.283); ctx.fill(); } }
+        const tie = [W / 2, H * 0.92];
+        const pts = Array.from({ length: 8 }, () => [W * 0.2 + rng() * W * 0.6, H * 0.15 + rng() * H * 0.35]);
+        ctx.strokeStyle = "rgba(80,80,80,.6)"; ctx.lineWidth = 2;
+        for (const [x, y] of pts) { ctx.beginPath(); ctx.moveTo(x, y + 70); ctx.quadraticCurveTo((x + tie[0]) / 2 + 20, (y + tie[1]) / 2, tie[0], tie[1]); ctx.stroke(); }
+        pts.forEach(([x, y], i) => balloon(ctx, x, y, 58, PALETTE[i % 5]));
+      },
+    };
+  },
+  presents() {
+    const W = 960, H = 720;
+    return {
+      width: W, height: H, faces: [],
+      draw(ctx) {
+        ctx.fillStyle = "#f3e9ff"; ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = "#c99b6d"; ctx.fillRect(0, H * 0.65, W, H);
+        bunting(ctx, W, 30);
+        const boxes = [[120, 230, 220], [370, 180, 300], [580, 260, 160], [770, 150, 200]];
+        boxes.forEach(([x, w, h], i) => {
+          const y = H * 0.82 - h, c = PALETTE[(i + 1) % 5], rib = PALETTE[(i + 3) % 5];
+          ctx.fillStyle = c; ctx.fillRect(x, y, w, h);
+          ctx.fillStyle = rib; ctx.fillRect(x + w / 2 - 12, y, 24, h); ctx.fillRect(x, y + h * 0.35, w, 20);
+          for (const s of [-1, 1]) { ctx.beginPath(); ctx.ellipse(x + w / 2 + s * 26, y - 14, 28, 16, s * 0.5, 0, 6.283); ctx.fill(); }
+        });
+        lightWash(ctx, W, H);
+      },
+    };
+  },
+};
+
+const album = [];
+function addPhoto(kind, seed, isNew = false) {
+  const scene = SCENES[kind](seed);
+  const photo = { id: `${kind}-${seed}`, kind, seed, ...scene, shown: 0, isNew, url: null, effect: null, aged: false };
+  album.unshift(photo);
+  process(photo);
+  updateStats();
+  return photo;
+}
+
+/* What the backend worker does once per photo: render → pick effect → apply → cache. */
+const enabledEffects = Object.fromEntries(Effects.map(e => [e.id, true]));
+function weightedPick(list) {
+  let t = Math.random() * list.reduce((s, e) => s + e.weight, 0);
+  for (const e of list) { t -= e.weight; if (t <= 0) return e; }
+  return list[list.length - 1];
+}
+function process(photo) {
+  const c = document.createElement("canvas");
+  c.width = photo.width; c.height = photo.height;
+  const ctx = c.getContext("2d");
+  photo.draw(ctx);
+  photo.effect = null; photo.aged = false;
+  const choices = Effects.filter(e => enabledEffects[e.id]);
+  if (photo.faces.length && choices.length) {
+    const e = weightedPick(choices);
+    const variant = e.apply(ctx, photo, mulberry32(Math.floor(Math.random() * 1e9)));
+    photo.effect = variant ? `${e.label} · ${variant}` : e.label;
+    photo.aged = !!e.agesPaper;
+  }
+  photo.url = c.toDataURL("image/jpeg", 0.9);
+}
+
+/* ============================================================
+   Wall: queue order + drifting cards
+   Cards move at one shared speed, so they never catch up with each other.
+   A new card enters once the previous one has fully entered plus a gap.
+   Each photo is about a quarter of the screen; cards alternate high / low.
+   ============================================================ */
+const wallEl = document.getElementById("wall");
+const settings = { max: CONFIG.maxOnScreen, crossing: CONFIG.crossingSeconds };
+const cards = [];
+let placeHigh = Math.random() < 0.5;
+let theme = null;
+
+function nextPhoto() {
+  const onScreen = new Set(cards.map(c => c.photo.id));
+  const pool = album.filter(p => p.url && !onScreen.has(p.id));
+  if (!pool.length) return null;
+  pool.sort((a, b) => (b.isNew - a.isNew) || (a.shown - b.shown) || (Math.random() - 0.5));
+  return pool[0];
+}
+
+function usableBand() {
+  const H = innerHeight;
+  const top = document.getElementById("header").getBoundingClientRect().bottom + H * 0.02;
+  return { top, bottom: H * 0.97 };
+}
+const pxPerSecond = () => (innerWidth + innerHeight * 0.7) / settings.crossing;
+const cardX = c => c.x0 - c.v * (c.anim.currentTime / 1000);
+const gapPx = () => innerWidth * 0.04;
+
+function spawn(x0) {
+  const photo = nextPhoto();
+  if (!photo) return null;
+  const wasNew = photo.isNew;
+  photo.shown++; photo.isNew = false;
+
+  const { top, bottom } = usableBand();
+  const band = bottom - top;
+  const imgH = band * 0.56 * rand(0.94, 1.04);
+  const imgW = imgH * photo.width / photo.height;
+  const pad = imgH * 0.045, padB = imgH * 0.2;
+  const cardW = imgW + pad * 2, cardH = imgH + pad + padB;
+  const slack = Math.max(band - cardH, 0);
+  const y = top + slack * (placeHigh ? rand(0, 0.25) : rand(0.75, 1));
+  placeHigh = !placeHigh;
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<div class="bob" style="--bob-dur:${rand(4, 6).toFixed(2)}s;--bob-delay:-${rand(0, 5).toFixed(2)}s;--r1:${rand(-5, 1).toFixed(1)}deg;--r2:${rand(-1, 5).toFixed(1)}deg">
+      <figure class="photo${photo.aged ? " aged" : ""}" style="--pad:${pad}px;--pad-b:${padB}px">
+        <img alt="" width="${Math.round(imgW)}" height="${Math.round(imgH)}" style="width:${imgW}px;height:${imgH}px">
+        <figcaption class="tag">${photo.effect || "No people · as is"}</figcaption>
+        ${wasNew ? `<div class="sticker">${theme.newLabel}</div>` : ""}
+      </figure>
+    </div>`;
+  card.querySelector("img").src = photo.url;
+  wallEl.appendChild(card);
+
+  const v = pxPerSecond();
+  const x1 = -cardW - 60;
+  const duration = (x0 - x1) / v * 1000;
+  const anim = card.animate(
+    [{ transform: `translate3d(${x0}px, ${y}px, 0)` }, { transform: `translate3d(${x1}px, ${y}px, 0)` }],
+    { duration, easing: "linear", fill: "forwards" }
+  );
+  const entry = { photo, card, anim, x0, v, w: cardW };
+  cards.push(entry);
+  anim.finished.then(() => {
+    card.remove();
+    cards.splice(cards.indexOf(entry), 1);
+  });
+  return entry;
+}
+
+function tick() {
+  if (cards.length >= settings.max) return;
+  const last = cards[cards.length - 1];
+  if (last && cardX(last) + last.w > innerWidth - gapPx()) return;
+  spawn(innerWidth + 10);
+}
+
+function seedWall() {
+  // Start mid-flight so the first frame already shows a full wall.
+  let x = innerWidth * 0.03;
+  while (x < innerWidth * 0.8 && cards.length < settings.max) {
+    const e = spawn(x);
+    if (!e) break;
+    x += e.w + gapPx();
+  }
+}
+
+/* ============================================================
+   Decorations: rising balloons, in the theme's palette
+   ============================================================ */
+const decorEl = document.getElementById("decor");
+let decorEnabled = CONFIG.decorations && !REDUCED;
+function balloonSVG(color) {
+  return `<svg viewBox="0 0 60 130" xmlns="http://www.w3.org/2000/svg">
+    <path d="M30 70 C 24 88, 38 100, 28 128" stroke="rgba(255,255,255,.5)" stroke-width="1.5" fill="none"/>
+    <ellipse cx="30" cy="34" rx="26" ry="31" fill="${color}"/>
+    <path d="M26 64 L34 64 L30 71 Z" fill="${color}"/>
+    <ellipse cx="21" cy="22" rx="5" ry="9" fill="rgba(255,255,255,.4)" transform="rotate(-25 21 22)"/>
+  </svg>`;
+}
+function launchBalloon() {
+  if (!decorEnabled || theme.decor !== "balloons" || decorEl.childElementCount > 8) return;
+  const el = document.createElement("div");
+  const size = rand(40, 80);
+  el.style.cssText = `position:absolute;left:0;top:0;width:${size}px;opacity:.85`;
+  el.innerHTML = balloonSVG(pick(theme.palette));
+  decorEl.appendChild(el);
+  const x = rand(0, innerWidth - size), sway = rand(-80, 80);
+  const a = el.animate(
+    [
+      { transform: `translate(${x}px, ${innerHeight + 20}px) rotate(-4deg)` },
+      { transform: `translate(${x + sway}px, ${innerHeight * 0.45}px) rotate(5deg)` },
+      { transform: `translate(${x - sway / 2}px, ${-size * 2.4}px) rotate(-3deg)` },
+    ],
+    { duration: rand(16000, 26000), easing: "linear" }
+  );
+  a.finished.then(() => el.remove());
+}
+
+/* ============================================================
+   Theme + background switching
+   ============================================================ */
+let currentBg = null;
+function setBackground(id) {
+  let next = Backgrounds.get(id);
+  if (!next || !next.themes.includes(theme.id) || (next.id === "custom" && !next.url)) next = Backgrounds.get(theme.defaultBackground);
+  if (currentBg) currentBg.unmount();
+  currentBg = next;
+  currentBg.mount(document.getElementById("bg"));
+  store.set(`wall.bg.${theme.id}`, currentBg.id);
+  const radio = document.getElementById(`bg-${currentBg.id}`);
+  if (radio) radio.checked = true;
+}
+
+function applyTheme(id) {
+  theme = Themes.get(id) || Themes.get("kids");
+  document.body.dataset.look = theme.id;
+  store.set("wall.theme", theme.id);
+  const h1 = document.getElementById("title");
+  h1.setAttribute("aria-label", CONFIG.title);
+  theme.renderTitle(h1, CONFIG.title);
+  document.getElementById("qr-caption").textContent = theme.qrCaption;
+  document.getElementById(`theme-${theme.id}`).checked = true;
+
+  document.getElementById("bg-opts").innerHTML = [...Backgrounds.values()].filter(b => b.themes.includes(theme.id)).map(b =>
+    `<label class="opt"><input type="radio" name="bg" value="${b.id}" id="bg-${b.id}"><span><i style="background:${b.swatch}"></i>${b.label}</span></label>`
+  ).join("");
+  setBackground(store.get(`wall.bg.${theme.id}`) || (theme.id === CONFIG.theme && CONFIG.background) || theme.defaultBackground);
+
+  const decorOn = document.getElementById("decor-on");
+  decorOn.disabled = !theme.decor;
+  document.getElementById("decor-name").textContent = theme.decor ? `(${theme.decor})` : "(none in this theme)";
+  if (!theme.decor) decorEl.replaceChildren();
+}
+
+/* ============================================================
+   Header QR placeholder
+   ============================================================ */
+function drawSampleQR() {
+  const c = document.getElementById("qr"), ctx = c.getContext("2d"), n = 29, rng = mulberry32(8);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, n, n);
+  ctx.fillStyle = "#0e1230";
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (rng() > 0.52) ctx.fillRect(x, y, 1, 1);
+  for (const [fx, fy] of [[0, 0], [n - 7, 0], [0, n - 7]]) {
+    ctx.fillStyle = "#fff"; ctx.fillRect(fx - 1, fy - 1, 9, 9);
+    ctx.fillStyle = "#0e1230"; ctx.fillRect(fx, fy, 7, 7);
+    ctx.fillStyle = "#fff"; ctx.fillRect(fx + 1, fy + 1, 5, 5);
+    ctx.fillStyle = "#0e1230"; ctx.fillRect(fx + 2, fy + 2, 3, 3);
+  }
+}
+
+/* ============================================================
+   Settings drawer
+   ============================================================ */
+const panel = document.getElementById("panel"), gear = document.getElementById("gear");
+function togglePanel(open = !panel.classList.contains("open")) {
+  panel.classList.toggle("open", open);
+  gear.setAttribute("aria-expanded", String(open));
+}
+function updateStats() {
+  const el = document.getElementById("stats");
+  if (!el) return;
+  const people = album.filter(p => p.faces.length).length;
+  el.textContent = `${album.length} photos in the sample album · ${people} with people`;
+}
+function buildPanel() {
+  document.getElementById("theme-opts").innerHTML = [...Themes.values()].map(t =>
+    `<label class="opt"><input type="radio" name="theme" value="${t.id}" id="theme-${t.id}"><span><i style="background:${t.swatch}"></i>${t.label}</span></label>`
+  ).join("");
+  document.getElementById("theme-opts").addEventListener("change", e => applyTheme(e.target.value));
+  document.getElementById("bg-opts").addEventListener("change", e => setBackground(e.target.value));
+
+  document.getElementById("fx-opts").innerHTML = Effects.map(e =>
+    `<div class="row"><label for="fx-${e.id}">${e.label}</label><input type="checkbox" id="fx-${e.id}" data-fx="${e.id}" checked></div>`
+  ).join("");
+  document.getElementById("fx-opts").addEventListener("change", e => { enabledEffects[e.target.dataset.fx] = e.target.checked; });
+
+  document.getElementById("bg-file").addEventListener("change", e => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => { customBackground.url = reader.result; setBackground("custom"); };
+    reader.readAsDataURL(f);
+  });
+  document.getElementById("reroll").addEventListener("click", () => album.forEach(process));
+  const max = document.getElementById("max"), speed = document.getElementById("speed");
+  max.addEventListener("input", () => { settings.max = +max.value; document.getElementById("max-out").textContent = max.value; });
+  speed.addEventListener("input", () => { settings.crossing = +speed.value; document.getElementById("speed-out").textContent = `${speed.value} s`; });
+  const decorOn = document.getElementById("decor-on");
+  decorOn.checked = decorEnabled;
+  decorOn.addEventListener("change", () => { decorEnabled = decorOn.checked; });
+  document.getElementById("tags").addEventListener("change", e => document.body.classList.toggle("show-tags", e.target.checked));
+  document.getElementById("upload").addEventListener("click", () => {
+    addPhoto(pick(["group", "group", "portrait"]), Math.floor(Math.random() * 1e6), true);
+  });
+  document.getElementById("fs").addEventListener("click", goFullscreen);
+  gear.addEventListener("click", () => togglePanel());
+  document.getElementById("close").addEventListener("click", () => togglePanel(false));
+}
+function goFullscreen() {
+  const req = document.documentElement.requestFullscreen;
+  if (req) req.call(document.documentElement).catch(() => {});
+}
+addEventListener("keydown", e => {
+  if (e.target.matches("input")) return;
+  if (e.key === "s" || e.key === "S") togglePanel();
+  if (e.key === "f" || e.key === "F") goFullscreen();
+  if (e.key === "Escape") togglePanel(false);
+});
+
+/* ============================================================
+   Boot
+   ============================================================ */
+drawSampleQR();
+buildPanel();
+applyTheme(store.get("wall.theme") || CONFIG.theme);
+["group", "portrait", "cake", "group", "balloons", "portrait", "group", "presents", "group", "portrait", "group", "group"]
+  .forEach((kind, i) => addPhoto(kind, 101 + i * 37));
+seedWall();
+setInterval(tick, 250);
+for (let i = 0; i < 3; i++) setTimeout(launchBalloon, i * 900);
+setInterval(launchBalloon, 3200);
+setTimeout(() => { document.getElementById("hint").style.opacity = 0; }, 7000);
+</script>

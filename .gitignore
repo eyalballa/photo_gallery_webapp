@@ -1,0 +1,17 @@
+__pycache__/
+.env
+.idea/
+deploy/
+.claude/
+.ruff_cache/
+.pytest_cache/
+.venv/
+backend/golden/output/
+backend/wall/env.json
+client_secret_*.json
+config.yaml
+data/
+frontend/dist/
+frontend/node_modules/
+policy-backup-*.hujson
+ts-state/

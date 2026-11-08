@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 200">
+  <defs><clipPath id="cone"><path d="M80 18 L148 186 Q80 200 12 186 Z"/></clipPath></defs>
+  <path d="M80 18 L148 186 Q80 200 12 186 Z" fill="#ff6b6b"/>
+  <g clip-path="url(#cone)" stroke="#ffd23f" stroke-width="16">
+    <path d="M0 70 L160 40 M0 110 L160 80 M0 150 L160 120 M0 190 L160 160"/>
+  </g>
+  <path d="M80 18 L148 186 Q80 200 12 186 Z" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="3"/>
+  <path d="M10 186 Q80 202 150 186" fill="none" stroke="#fff" stroke-width="10" stroke-linecap="round"/>
+  <g fill="#ffd23f" stroke="#fff" stroke-width="2"><circle cx="80" cy="14" r="13"/></g>
+</svg>

@@ -1,0 +1,19 @@
+event:
+  title: "Happy 8th Birthday John!"                   # the wall's header and browser tab, after login
+  login_title: "Photo wall"                         # the passcode screen; public, so no names
+  qr_url: "https://photos.app.goo.gl/XXXXXXXX"     # album join link shown in the corner
+  album_url: "https://photos.app.goo.gl/XXXXXXXX"  # the shared album's link (read by ShareLinkSource)
+display:
+  theme: kids              # kids | grown | roses
+  background: null         # null = theme default; or confetti, party-night, velvet, ...
+  decorations: true        # balloons
+  max_on_screen: 4
+  crossing_seconds: 24
+  new_marker: true
+effects:
+  weights: { glasses: 25, mustache: 25, party_hat: 25, vintage: 25 }
+  min_face_px: 60
+  max_yaw: 0.35            # turned faces skip accessories
+sync:
+  every_s: 90
+data_dir: data

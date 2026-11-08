@@ -1,0 +1,40 @@
+# The app runs inside the Tailscale container's network namespace, so it's reachable only through
+# Tailscale Serve/Funnel at https://party.<tailnet>.ts.net (nothing is published on the host).
+services:
+  app:
+    # built locally with `docker compose build` (see docs/DEPLOY.md); never pulled from a registry
+    image: photo-wall:latest
+    build: .
+    pull_policy: never
+    restart: unless-stopped
+    # only what the app needs from .env (not TS_AUTHKEY or the Google client)
+    environment:
+      - PASSCODE=${PASSCODE}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - COOKIE_SECURE=${COOKIE_SECURE:-true}
+    volumes:
+      - ./data:/app/backend/data
+      - ./config.yaml:/app/backend/config.yaml:ro
+    network_mode: service:tailscale
+    depends_on: [tailscale]
+
+  tailscale:
+    image: tailscale/tailscale:v1.102.5
+    hostname: party
+    # Explicit DNS: a host whose /etc/docker/daemon.json sets IPv6-only DNS servers breaks lookups on this IPv4-only
+    # compose network (SERVFAIL). The app shares this container's network, so this covers both. Remove if unneeded.
+    dns: [1.1.1.1, 9.9.9.9]
+    restart: unless-stopped
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_SERVE_CONFIG=/config/serve.json
+      - TS_USERSPACE=false
+      # e.g. --advertise-tags=tag:party, so the ACL can stop this node reaching your other devices (docs/DEPLOY.md)
+      - TS_EXTRA_ARGS=${TS_EXTRA_ARGS:-}
+    volumes:
+      - ./ts-state:/var/lib/tailscale
+      - ./ts-serve.json:/config/serve.json:ro
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    cap_add: [net_admin]
