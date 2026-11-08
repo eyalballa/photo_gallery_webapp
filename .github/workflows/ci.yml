@@ -39,8 +39,7 @@ jobs:
           target: web-test
           tags: photo-wall-web-test:latest
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha  # its layers are part of the app build, so only the app step writes the cache
       - name: Save images for the test jobs
         run: docker save photo-wall:latest photo-wall-test:latest photo-wall-web-test:latest | gzip -1 > images.tar.gz
       - uses: actions/upload-artifact@v4
