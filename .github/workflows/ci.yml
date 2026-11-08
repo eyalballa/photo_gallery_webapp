@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
-      - name: App image
+      - name: "Build image: app (what ships)"
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -24,7 +24,7 @@ jobs:
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Backend test image
+      - name: "Build image: backend test runner (app + pytest + tests)"
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -32,7 +32,7 @@ jobs:
           tags: photo-wall-test:latest
           load: true
           cache-from: type=gha
-      - name: Frontend test image
+      - name: "Build image: frontend test runner (node + vitest)"
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -41,7 +41,7 @@ jobs:
           load: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Save images
+      - name: Save images for the test jobs
         run: docker save photo-wall:latest photo-wall-test:latest photo-wall-web-test:latest | gzip -1 > images.tar.gz
       - uses: actions/upload-artifact@v4
         with:
