@@ -41,7 +41,6 @@ class WallConfig(BaseModel):
     theme: Literal["kids", "grown", "roses"]
     background: str | None
     decorations: bool
-    max_on_screen: int = Field(ge=1, le=4)
     crossing_seconds: int = Field(ge=8, le=60)
     new_marker: bool
     effect_labels: dict[str, str]

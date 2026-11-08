@@ -94,7 +94,6 @@ export interface WallSettings {
   theme: string;
   background: string;
   crossingSeconds: number;
-  maxOnScreen: number;
   decorations: boolean;
   newMarker: boolean;
 }
@@ -104,6 +103,5 @@ export interface SettingsOverrides {
   theme?: string;
   backgrounds?: Record<string, string>;
   crossingSeconds?: number;
-  maxOnScreen?: number;
   decorations?: boolean;
 }

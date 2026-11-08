@@ -19,7 +19,6 @@ export function resolveSettings(config: WallConfig, o: SettingsOverrides, hasIma
     theme: theme.id,
     background: usable ? bg.id : theme.defaultBackground,
     crossingSeconds: clamp(o.crossingSeconds ?? config.crossing_seconds, 8, 60),
-    maxOnScreen: clamp(o.maxOnScreen ?? config.max_on_screen, 1, 4),
     decorations: o.decorations ?? config.decorations,
     newMarker: config.new_marker,
   };
@@ -44,7 +43,6 @@ export function parseOverrides(raw: string | null): SettingsOverrides {
   if (typeof d.theme === "string") out.theme = d.theme;
   if (isRecordOfStrings(d.backgrounds)) out.backgrounds = d.backgrounds;
   if (typeof d.crossingSeconds === "number") out.crossingSeconds = d.crossingSeconds;
-  if (typeof d.maxOnScreen === "number") out.maxOnScreen = d.maxOnScreen;
   if (typeof d.decorations === "boolean") out.decorations = d.decorations;
   return out;
 }

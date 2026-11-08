@@ -30,7 +30,6 @@ class DisplayConfig(BaseModel):
     theme: Literal["kids", "grown", "roses"] = "kids"
     background: str | None = None
     decorations: bool = True
-    max_on_screen: int = Field(4, ge=1, le=4)
     crossing_seconds: int = Field(24, ge=8, le=60)
     new_marker: bool = True
 

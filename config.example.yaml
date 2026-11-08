@@ -7,7 +7,6 @@ display:
   theme: kids              # kids | grown | roses
   background: null         # null = theme default; or confetti, party-night, velvet, ...
   decorations: true        # balloons
-  max_on_screen: 4
   crossing_seconds: 24
   new_marker: true
 effects:

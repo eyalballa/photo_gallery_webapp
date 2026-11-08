@@ -79,12 +79,6 @@ export function SettingsDrawer({ open, settings, onClose, onChange, onImage, onR
       <section>
         <h3>Wall</h3>
         <div className="row">
-          <label htmlFor="max">Photos on screen (max)</label>
-          <input id="max" type="range" min={1} max={4} step={1} value={settings.maxOnScreen}
-            onChange={(e) => onChange({ maxOnScreen: Number(e.target.value) })} />
-          <output>{settings.maxOnScreen}</output>
-        </div>
-        <div className="row">
           <label htmlFor="speed">Seconds to cross</label>
           <input id="speed" type="range" min={8} max={60} step={1} value={settings.crossingSeconds}
             onChange={(e) => onChange({ crossingSeconds: Number(e.target.value) })} />

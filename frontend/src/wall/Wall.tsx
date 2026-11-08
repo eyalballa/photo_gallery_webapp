@@ -71,7 +71,6 @@ export function Wall({ client, config, onLocked }: Props) {
         <CardsLayer
           photos={feed.photos}
           loaded={feed.loaded}
-          maxOnScreen={settings.maxOnScreen}
           crossingSeconds={settings.crossingSeconds}
           newLabel={settings.newMarker ? theme.newLabel : null}
           headerRef={headerRef}
