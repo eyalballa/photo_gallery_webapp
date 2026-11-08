@@ -5,7 +5,6 @@
 frontend/dist
 backend/data
 backend/golden
-backend/tests
 backend/config.yaml
 backend/wall/env.json
 data
