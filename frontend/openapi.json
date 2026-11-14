@@ -119,6 +119,78 @@
         }
       }
     },
+    "/api/effects": {
+      "get": {
+        "summary": "Effects",
+        "operationId": "effects_api_effects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectsSettings"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Set Effects",
+        "operationId": "set_effects_api_effects_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EffectsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EffectsSettings"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/effects/reroll": {
+      "post": {
+        "summary": "Reroll Effects",
+        "operationId": "reroll_effects_api_effects_reroll_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RerollReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/media/{photo_id}.jpg": {
       "get": {
         "summary": "Media",
@@ -154,6 +226,95 @@
   },
   "components": {
     "schemas": {
+      "EffectSetting": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "face",
+              "photo"
+            ],
+            "title": "Kind"
+          },
+          "on": {
+            "type": "boolean",
+            "title": "On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "kind",
+          "on"
+        ],
+        "title": "EffectSetting"
+      },
+      "EffectsSettings": {
+        "properties": {
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/EffectSetting"
+            },
+            "type": "array",
+            "title": "Effects"
+          },
+          "honoree": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Honoree"
+          }
+        },
+        "type": "object",
+        "required": [
+          "effects",
+          "honoree"
+        ],
+        "title": "EffectsSettings",
+        "description": "The effect switches in the settings drawer: config.yaml's weights with the drawer's changes on top."
+      },
+      "EffectsUpdate": {
+        "properties": {
+          "off": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Off"
+          },
+          "honoree": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Honoree"
+          }
+        },
+        "type": "object",
+        "required": [
+          "off"
+        ],
+        "title": "EffectsUpdate"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -268,6 +429,19 @@
         ],
         "title": "PublicConfig",
         "description": "What the passcode screen may show to anyone with the URL."
+      },
+      "RerollReport": {
+        "properties": {
+          "queued": {
+            "type": "integer",
+            "title": "Queued"
+          }
+        },
+        "type": "object",
+        "required": [
+          "queued"
+        ],
+        "title": "RerollReport"
       },
       "ValidationError": {
         "properties": {

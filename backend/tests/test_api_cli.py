@@ -40,6 +40,33 @@ def test_config_route(client):
     assert client.get("/api/config").json()["title"] == "John is 8!"
 
 
+def test_effects_routes(client):
+    res = client.put("/api/effects", json={"off": ["pop_art"], "honoree": "John"})
+
+    assert res.status_code == 200
+    assert [e["id"] for e in res.json()["effects"] if not e["on"]] == ["pop_art"]
+    assert client.get("/api/effects").json()["honoree"] == "John"
+    assert client.put("/api/effects", json={"off": ["nope"]}).status_code == 422
+    assert client.post("/api/effects/reroll").json() == {"queued": 0}
+
+
+async def test_repick_route_processes_right_away(client, deps, clock):
+    svc = WallService(deps)
+    await svc.sync_once()
+    await svc.process_pending()
+    clock.tick()
+
+    assert client.post("/api/effects/reroll").json() == {"queued": 2}
+
+    # TestClient runs background tasks before returning: both photos are ready again, at version 2
+    assert [p["version"] for p in client.get("/api/photos").json()["photos"]] == [2, 2]
+
+
+def test_effects_changes_need_a_session(anon):
+    assert anon.put("/api/effects", json={"off": []}).status_code == 401
+    assert anon.post("/api/effects/reroll").status_code == 401
+
+
 def test_unknown_media_is_404(client):
     assert client.get("/media/nope.jpg").status_code == 404
 
@@ -59,7 +86,7 @@ def test_wrong_passcode_is_401_then_429(anon):
     assert codes == [401] * 5 + [429]
 
 
-@pytest.mark.parametrize("path", ["/api/config", "/api/photos", "/media/a.jpg"])
+@pytest.mark.parametrize("path", ["/api/config", "/api/photos", "/api/effects", "/media/a.jpg"])
 def test_data_routes_need_a_session(anon, path):
     assert anon.get(path).status_code == 401
     anon.cookies.set("wall_session", "9999999999.forged")

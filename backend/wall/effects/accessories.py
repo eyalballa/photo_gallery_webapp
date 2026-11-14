@@ -1,10 +1,21 @@
-"""Glasses, mustache and party hat: SVG assets anchored to face landmarks."""
+"""Glasses, circus glasses, mustache and party hat: SVG assets anchored to face landmarks."""
 
 from random import Random
 
 from PIL import Image
 
-from wall.effects.base import EffectResult, Face, Placement, Point, lerp, paste_asset, register, up_vector, variants
+from wall.config import EffectsConfig
+from wall.effects.base import (
+    EffectResult,
+    Face,
+    Placement,
+    Point,
+    lerp,
+    paste_asset,
+    register,
+    up_vector,
+    variants,
+)
 
 
 class _Accessory:
@@ -16,7 +27,7 @@ class _Accessory:
     def placement(self, face: Face) -> Placement:
         raise NotImplementedError
 
-    def apply(self, img: Image.Image, faces: list[Face], rng: Random) -> EffectResult:
+    def apply(self, img: Image.Image, faces: list[Face], rng: Random, cfg: EffectsConfig) -> EffectResult:
         path = rng.choice(variants(self.id))
         for face in faces:
             paste_asset(img, path, self.placement(face))
@@ -32,6 +43,18 @@ class Glasses(_Accessory):
         # assets put the bridge at the centre, lens centres at 0.29/0.71 of the width
         return Placement(target=lerp(lm.left_eye, lm.right_eye, 0.5), width=2.4 * face.size, angle=face.roll,
                          anchor=Point(x=0.5, y=0.5))
+
+
+@register
+class CircusGlasses(_Accessory):
+    id, label = "circus_glasses", "Circus glasses"
+
+    def placement(self, face: Face) -> Placement:
+        lm = face.landmarks
+        # oversized novelty glasses: assets are 400x260 with the eyes at (150, 100) and (250, 100), i.e. one
+        # inter-ocular distance = 100 units, so the width is 4x; the lenses sit further out than the eyes
+        return Placement(target=lerp(lm.left_eye, lm.right_eye, 0.5), width=4.0 * face.size, angle=face.roll,
+                         anchor=Point(x=0.5, y=100 / 260))
 
 
 @register

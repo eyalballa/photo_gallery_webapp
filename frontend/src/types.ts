@@ -49,6 +49,8 @@ export interface CardState {
   x1: number;
   v: number;
   startedAt: number;
+  /** Space in px the next card leaves behind this one (random per card). */
+  gap: number;
 }
 
 export interface Viewport {

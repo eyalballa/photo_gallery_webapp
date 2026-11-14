@@ -5,6 +5,7 @@ from random import Random
 import numpy as np
 from PIL import Image, ImageDraw
 
+from wall.config import EffectsConfig
 from wall.effects.base import EffectResult, Face, register
 
 SEPIA = np.array([[0.393, 0.769, 0.189], [0.349, 0.686, 0.168], [0.272, 0.534, 0.131]])
@@ -15,7 +16,7 @@ PAPER = np.array([240, 228, 200], dtype=np.float32)
 class Vintage:
     id, label, weight, accessory = "vintage", "Vintage", 25.0, False
 
-    def apply(self, img: Image.Image, faces: list[Face], rng: Random) -> EffectResult:
+    def apply(self, img: Image.Image, faces: list[Face], rng: Random, cfg: EffectsConfig) -> EffectResult:
         a = np.asarray(img.convert("RGB"), dtype=np.float32)
         h, w, _ = a.shape
         a = np.clip(a @ SEPIA.T, 0, 255)

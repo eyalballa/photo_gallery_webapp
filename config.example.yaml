@@ -10,7 +10,20 @@ display:
   crossing_seconds: 24
   new_marker: true
 effects:
-  weights: { glasses: 25, mustache: 25, party_hat: 25, vintage: 25 }
+  # Every live effect (`python -m wall effects` lists them). One is picked per photo with faces, by weight; 0 = off.
+  weights:
+    glasses: 25            # face accessories (frontal faces only)
+    circus_glasses: 15
+    mustache: 25
+    party_hat: 25
+    big_eyes: 10
+    vintage: 25            # whole photo
+    pop_art: 10
+    sketch: 10
+    wanted: 10
+    confetti: 10
+    cake_frame: 10
+  honoree: null            # name on the cake frame, e.g. "John"; null = "Happy Birthday!"
   min_face_px: 60
   max_yaw: 0.35            # turned faces skip accessories
 sync:

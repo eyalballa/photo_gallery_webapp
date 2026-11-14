@@ -72,6 +72,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/effects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Effects */
+        get: operations["effects_api_effects_get"];
+        /** Set Effects */
+        put: operations["set_effects_api_effects_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/effects/reroll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reroll Effects */
+        post: operations["reroll_effects_api_effects_reroll_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/media/{photo_id}.jpg": {
         parameters: {
             query?: never;
@@ -93,6 +128,37 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** EffectSetting */
+        EffectSetting: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "face" | "photo";
+            /** On */
+            on: boolean;
+        };
+        /**
+         * EffectsSettings
+         * @description The effect switches in the settings drawer: config.yaml's weights with the drawer's changes on top.
+         */
+        EffectsSettings: {
+            /** Effects */
+            effects: components["schemas"]["EffectSetting"][];
+            /** Honoree */
+            honoree: string | null;
+        };
+        /** EffectsUpdate */
+        EffectsUpdate: {
+            /** Off */
+            off: string[];
+            /** Honoree */
+            honoree?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -142,6 +208,11 @@ export interface components {
         PublicConfig: {
             /** Login Title */
             login_title: string;
+        };
+        /** RerollReport */
+        RerollReport: {
+            /** Queued */
+            queued: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -290,6 +361,79 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    effects_api_effects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EffectsSettings"];
+                };
+            };
+        };
+    };
+    set_effects_api_effects_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EffectsUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EffectsSettings"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reroll_effects_api_effects_reroll_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RerollReport"];
                 };
             };
         };

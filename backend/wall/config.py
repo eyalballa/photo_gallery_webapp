@@ -35,7 +35,13 @@ class DisplayConfig(BaseModel):
 
 
 class EffectsConfig(BaseModel):
-    weights: dict[str, float] = {"glasses": 25, "mustache": 25, "party_hat": 25, "vintage": 25}
+    # Every live effect, by id (`python -m wall effects` lists them). 0 turns one off; a missing id uses the effect's
+    # own default weight.
+    weights: dict[str, float] = {
+        "glasses": 25, "circus_glasses": 15, "mustache": 25, "party_hat": 25, "vintage": 25,
+        "pop_art": 10, "sketch": 10, "wanted": 10, "big_eyes": 10, "confetti": 10, "cake_frame": 10,
+    }
+    honoree: str | None = None  # the name on the cake frame; None prints "Happy Birthday!" alone
     min_face_px: int = 60
     max_yaw: float = 0.35  # |yaw proxy| above this skips accessories and falls back to vintage
 

@@ -36,7 +36,7 @@ Visual reference: [`mockup/wall-sample.html`](../mockup/wall-sample.html) (open 
 | Moderation | Remove a photo from the album and it leaves the wall within about 5 min. |
 | Ambient filtering | Accept Google's default content filtering. De-duplicate by media item id. Skip videos. |
 | Face effects | Run **once per photo on the backend** (MediaPipe Face Landmarker + Pillow/OpenCV) and cache the result. |
-| Effect choice | Random, weighted, fixed per photo (seeded by media id). Default: glasses / mustache / party hat / vintage, 25% each. Every face over about 60 px gets the same effect type. Photos without faces show unedited. |
+| Effect choice | Random, weighted, fixed per photo (seeded by media id). Default weights: glasses / mustache / party hat / vintage 25 each; circus glasses 15; big eyes, pop art, pencil sketch, wanted poster, confetti and cake frame 10 each. Effects can be switched on and off from the settings drawer. Every face over about 60 px gets the same effect type. Photos without faces show unedited. |
 | Display | 3–4 polaroids max, single file, one shared speed (~24 s to cross), alternating high and low, gentle bob and tilt, no captions. "NEW" marker on a photo's first appearance. |
 | Order | Newest first, then least shown, then random. |
 | Themes | **Kids party**, **Young adult** and **Roses & gold** (after a bat mitzvah invitation: blush, gold frames, roses). They differ in fonts, palette, background and decorations (see §6.3). |
@@ -196,18 +196,26 @@ EFFECTS: dict[str, Effect] = {}
 def register(effect: Effect) -> Effect: ...   # used as a decorator in effects/*.py
 ```
 
-- **Adding an effect** means dropping a file in `backend/wall/effects/` that defines a class with `@register`. Config can set `weights: {party_hat: 0}` to turn one off.
+- **Adding an effect** means dropping a file in `backend/wall/effects/` that defines a class with `@register`. Config can set `weights: {party_hat: 0}` to turn one off; `python -m wall effects` lists the live effects with their current weights, and an unknown id in `weights` is warned about at startup.
+- **Switching effects from the wall:** the settings drawer's *Photo effects* section has an on/off box per effect and the cake-frame name. They're saved in the DB `meta` table (key `effects`, because `config.yaml` is mounted read-only), on top of config.yaml: an effect switched off gets weight 0, one switched on keeps its config weight (or its own default when the config had it at 0). They apply to photos processed from then on; *Re-pick effects for all photos* sends every ready photo back to processing with a new salt. `wipe` clears them.
 - **Face detection:** MediaPipe Face Landmarker (`face_landmarker.task`, 478 points with irises), up to 10 faces per pass. Its detector is short-range and missed most faces in group shots (8 of ~105 on the golden set), so `wall/faces.py` also scans overlapping 2×2 and 3×3 tiles (25% overlap) and merges the results: duplicates are dropped when eye positions are within half an eye distance, and faces touching an inner tile edge are discarded. That found 105 faces, at about 0.1 s per photo. Faces whose box is narrower than `min_face_px` (60 px) are ignored. If no qualifying faces are found, the photo gets no effect.
-- **Turned faces:** a yaw proxy (nose offset from the eye midpoint along the eye line, in eye distances) above `max_yaw` (0.35) skips accessories for that face; if no face is frontal, only non-accessory effects (vintage) are eligible.
+- **Turned faces:** a yaw proxy (nose offset from the eye midpoint along the eye line, in eye distances) above `max_yaw` (0.35) skips accessories for that face; if no face is frontal, only whole-photo (non-accessory) effects are eligible.
 - **Choosing an effect:** `rng = Random(sha256(media_id)[:8] ^ reroll_salt)` (Python's `hash()` changes per process), then a weighted pick among enabled effects, then the effect's own variant pick. The choice is stored in the DB, so restarts don't change it.
 - **Effects:**
   - **Accessories** (glasses, mustache, party hat) are SVG assets in `backend/assets/<effect>/<variant>.svg`. They're rasterized with `resvg-py` (self-contained, no system cairo) at the needed size, rotated by `roll` and anchored to landmarks. Each asset's viewBox defines its anchor:
     - glasses: centre of the asset on the eye midpoint, width 2.4 × inter-ocular distance (lens centres at 0.29 / 0.71 of the width)
     - mustache: asset point (0.5, 0.3) at 30% of the way from nose tip to mouth, width 1.5 ×
     - hat: brim centre (0.5, 0.94) half an eye distance above the forehead landmark along the face's up vector, width 2.2 ×
-    - all three were tuned on the golden set (`python -m wall.golden golden/input golden/output` renders every image with every effect, plus contact sheets)
+    - circus glasses: oversized novelty glasses, eye midpoint on asset point (0.5, 100/260), width 4 × (the 400×260 assets put the eyes at x 150 / 250, with the lenses further out so the eyes look small inside them)
+    - all of them were tuned on the golden set (`python -m wall.golden golden/input golden/output` renders every image with every effect, plus contact sheets)
+  - **Big eyes** (accessory): a smooth magnifying warp centred on each iris (about 2–2.5× at the centre; radius 0.5 × inter-ocular distance along the eye line so the two bulges just meet, 1.25× that vertically), plus anime catch-lights. Variants: cute, huge.
   - **Vintage** is a pixel transform (sepia matrix, fade, grain, vignette, a few scratches) and sets `aged_paper=True`.
-  - Asset variants at launch: glasses = round, heart, star, aviator; mustache = handlebar, walrus, chevron; hat = striped cone in palette colors.
+  - **Pop art:** four copies in a 2×2 grid, each cut to three flat tones (thresholds taken from the face region) and recoloured with clashing colours. Variants: warhol, candy, electric.
+  - **Pencil sketch:** greyscale colour-dodge sketch with cross-hatching in the shadows, on paper grain; `aged_paper=True`. Variants: graphite, sepia, charcoal.
+  - **Wanted poster:** the photo sepia-toned and cropped around the faces on a parchment poster with WANTED, a kid-friendly charge and a made-up reward (the variant); `aged_paper=True`. Text uses Pillow's built-in font (no system fonts in the image), so it's ASCII only.
+  - **Confetti:** a few hundred tumbling pieces (strips, dots, stars, streamers) with shadows, thinned out over face boxes. Variants: rainbow, gold, pastel.
+  - **Cake frame:** tiled frosting drips along the top, a cake band with candles and "Happy Birthday, {honoree}!" along the bottom (SVG tiles in `backend/assets/cake_frame/`). The photo shrinks a little if the frame would cover a face. Variants: strawberry, chocolate, vanilla, blueberry.
+  - Asset variants at launch: glasses = round, heart, star, aviator; circus glasses = clown, groucho (nose, eyebrows and mustache), stars, hypno; mustache = handlebar, walrus, chevron; hat = striped cone in palette colors.
 - **Failures:** an effect error falls back to the unedited photo, still status ready, and the error is logged.
 
 ### 4.4 Storage (SQLite, `/data/wall.db`)
@@ -234,6 +242,9 @@ meta(key TEXT PRIMARY KEY, value TEXT)   -- last_sync, last_sync_error
 | `GET /api/public` | none | `login_title` only: what the passcode screen shows. Nothing private. |
 | `GET /api/config` | cookie | Title, theme, background, timing, QR link, effect labels. |
 | `GET /api/photos?since=<iso>` | cookie | Photos that are ready: `id, w, h, aged, firstSeen, version, url`. Includes `removed` ids since the given time. |
+| `GET /api/effects` | cookie | Each effect's id, label, kind (face / photo) and on/off, plus the cake-frame name. |
+| `PUT /api/effects` `{off, honoree}` | cookie | Saves the switches (422 for an unknown id); applies to photos processed from now on. |
+| `POST /api/effects/reroll` | cookie | Sends every ready photo back to processing; returns `{queued}`. |
 | `GET /media/{id}.jpg?v=` | cookie | Processed image, `Cache-Control: private, max-age=86400`. |
 | `GET /*` | none | The React build. It shows the passcode screen until the session is valid. |
 
@@ -310,7 +321,9 @@ display:
   crossing_seconds: 24
   new_marker: true
 effects:
-  weights: { glasses: 25, mustache: 25, party_hat: 25, vintage: 25 }
+  weights: { glasses: 25, circus_glasses: 15, mustache: 25, party_hat: 25, big_eyes: 10, vintage: 25, pop_art: 10, sketch: 10,
+             wanted: 10, confetti: 10, cake_frame: 10 }
+  honoree: null             # name on the cake frame
   min_face_px: 60
   max_yaw: 0.35             # turned faces skip accessories
 sync:
@@ -387,7 +400,7 @@ backgrounds share a `canvasBackground({setup, frame})` helper (DPR capped at 1.5
 
 - **Size:** usable band = from below the header to 97% of the height. Image height ≈ 56% of the band (±5%), polaroid padding 4.5% on the sides and 20% at the bottom.
 - **Motion:** one shared speed `v = (viewportW + 0.7·viewportH) / crossing_seconds`, so cards never catch up with each other. If the speed goes up (settings drawer, resize), a new card waits until it can't catch the last one before that one leaves.
-- **Spawning:** a new card enters when the previous card has fully entered plus a 4% gap. There's no maximum count: spacing alone decides, so the number of photos on screen follows the screen's width and the photos' shapes (more narrow portrait cards fit than wide landscape ones). A fixed `max_on_screen` was removed because it left holes when narrow cards needed more than the maximum to fill the screen.
+- **Spawning:** a new card enters when the previous card has fully entered plus a gap drawn at random per card, between 2% and 12% of the width, so the spacing isn't monotonous. There's no maximum count: spacing alone decides, so the number of photos on screen follows the screen's width and the photos' shapes (more narrow portrait cards fit than wide landscape ones). A fixed `max_on_screen` was removed because it left holes when narrow cards needed more than the maximum to fill the screen.
 - **Vertical position:** alternates between the top 25% and the bottom 25% of the band's slack.
 - **Queue:** `isNew desc, shownCount asc, random`. `shownCount` is kept in memory, and `isNew` means it arrived after this browser session started and hasn't been shown yet (photos already in the album at startup aren't new). The picked next photo is kept across ticks while it still ranks first, and pre-decoded before its slot opens. Photos that are removed or currently on screen are excluded.
 - **Startup:** cards are placed mid-flight, so the first frame is a full wall.

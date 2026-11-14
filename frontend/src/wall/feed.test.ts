@@ -17,6 +17,9 @@ const fakeClient = (reply: PhotosResponse | Error, calls: (string | null)[] = []
     if (reply instanceof Error) throw reply;
     return reply;
   },
+  effects: async () => ({ effects: [], honoree: null }),
+  setEffects: async () => ({ effects: [], honoree: null }),
+  rerollEffects: async () => ({ queued: 0 }),
 });
 
 describe("mergePhotos", () => {
