@@ -8,10 +8,25 @@ import shutil
 from datetime import datetime
 
 from wall.auth import RateLimiter, Sessions
+from wall.config import EffectsConfig
 from wall.deps import Deps
 from wall.effects import EFFECTS
 from wall.process import process_one
-from wall.schemas import LoginRequest, MediaFile, PhotoOut, PhotosResponse, ProcessReport, PublicConfig, StatusReport, SyncReport, WallConfig
+from wall.schemas import (
+    EffectSetting,
+    EffectsSettings,
+    EffectsUpdate,
+    LoginRequest,
+    MediaFile,
+    PhotoOut,
+    PhotosResponse,
+    ProcessReport,
+    PublicConfig,
+    RerollReport,
+    StatusReport,
+    SyncReport,
+    WallConfig,
+)
 from wall.store import ProcessedFields
 from wall.sync import describe, sync_once
 
@@ -26,6 +41,13 @@ class RateLimited(Exception):
     pass
 
 
+class UnknownEffect(ValueError):
+    pass
+
+
+EFFECTS_META = "effects"  # the drawer's effect switches, kept in the DB because config.yaml is mounted read-only
+
+
 class WallService:
     def __init__(self, deps: Deps):
         self.d = deps
@@ -33,6 +55,9 @@ class WallService:
         self.sessions = Sessions(f"{deps.session_secret or secrets.token_hex(32)}:{deps.passcode or ''}", deps.clock)
         self.login_limit = RateLimiter(deps.clock)
         self.global_login_limit = RateLimiter(deps.clock, limit=30)  # caps guessing from many IPs at once
+        # the background loop and a re-pick from the drawer may both process; one pass at a time, or a photo
+        # would be processed twice
+        self._processing = asyncio.Lock()
 
     def get_public_config(self) -> PublicConfig:
         return PublicConfig(login_title=self.d.config.event.login_title)
@@ -49,6 +74,45 @@ class WallService:
             new_marker=c.display.new_marker,
             effect_labels={eid: e.label for eid, e in sorted(EFFECTS.items())},
         )
+
+    def _effects_update(self) -> EffectsUpdate | None:
+        raw = self.d.store.get_meta(EFFECTS_META)
+        return EffectsUpdate.model_validate_json(raw) if raw else None
+
+    def effects_config(self) -> EffectsConfig:
+        """config.yaml's effects with the drawer's switches applied: an effect switched off gets weight 0, one
+        switched on keeps its config weight (or its own default if the config had it at 0)."""
+        base, update = self.d.config.effects, self._effects_update()
+        if update is None:
+            return base
+        weights = {
+            eid: 0 if eid in update.off else (base.weights.get(eid, e.weight) or e.weight)
+            for eid, e in EFFECTS.items()
+        }
+        return base.model_copy(update={"weights": weights, "honoree": update.honoree})
+
+    def get_effects(self) -> EffectsSettings:
+        cfg = self.effects_config()
+        return EffectsSettings(
+            effects=[
+                EffectSetting(id=eid, label=e.label, kind="face" if e.accessory else "photo",
+                              on=cfg.weights.get(eid, e.weight) > 0)
+                for eid, e in sorted(EFFECTS.items())
+            ],
+            honoree=cfg.honoree,
+        )
+
+    def set_effects(self, update: EffectsUpdate) -> EffectsSettings:
+        """Applies to photos processed from now on; `reroll_all` re-picks the ones already on the wall."""
+        if unknown := sorted(set(update.off) - set(EFFECTS)):
+            raise UnknownEffect(", ".join(unknown))
+        honoree = (update.honoree or "").strip() or None
+        self.d.store.set_meta(EFFECTS_META, update.model_copy(update={"honoree": honoree}).model_dump_json())
+        return self.get_effects()
+
+    def reroll_all(self) -> RerollReport:
+        """Queues every ready photo; the caller runs `process_pending` (the API does it right after responding)."""
+        return RerollReport(queued=self.d.store.queue_reroll(None))
 
     def list_photos(self, since: datetime | None) -> PhotosResponse:
         now = self.d.clock()
@@ -68,7 +132,8 @@ class WallService:
     def get_media(self, photo_id: str) -> MediaFile:
         row = self.d.store.get(photo_id)
         path = self.d.processed / f"{photo_id}.jpg"
-        if row is None or row.status != "ready" or not path.exists():
+        # pending with a file on disk = queued for a re-pick: keep showing the previous image until the new one lands
+        if row is None or row.status not in ("ready", "pending") or not path.exists():
             raise NotFound(photo_id)
         return MediaFile(path=path, version=row.version)
 
@@ -97,13 +162,18 @@ class WallService:
         return report
 
     async def process_pending(self, limit: int | None = None) -> ProcessReport:
+        async with self._processing:
+            return await self._process_pending(limit)
+
+    async def _process_pending(self, limit: int | None) -> ProcessReport:
         report = ProcessReport(processed=0, failed=0)
+        effects = self.effects_config()
         for row in self.d.store.pending(limit):
             try:
                 # face detection is CPU-bound; keep it off the event loop so the API stays responsive
                 fields = await asyncio.to_thread(
                     process_one, row.id, self.d.originals / f"{row.id}.jpg", self.d.processed / f"{row.id}.jpg",
-                    self.d.face_detector, self.d.config.effects, row.reroll_salt,
+                    self.d.face_detector, effects, row.reroll_salt,
                 )
                 report.processed += 1
                 key = fields.effect or "none"

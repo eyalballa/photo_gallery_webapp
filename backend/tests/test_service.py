@@ -2,8 +2,8 @@ from datetime import timedelta, timezone
 
 import pytest
 
-from wall.schemas import LoginRequest
-from wall.service import NotFound, RateLimited, WallService
+from wall.schemas import EffectsUpdate, LoginRequest
+from wall.service import NotFound, RateLimited, UnknownEffect, WallService
 
 
 @pytest.fixture
@@ -132,3 +132,47 @@ async def test_wipe_clears_store_and_files(svc, deps, clock):
 
     assert deps.store.counts() == {}
     assert not deps.originals.exists() and not deps.processed.exists()
+
+
+def test_effects_default_to_config_yaml(svc, deps):
+    s = svc.get_effects()
+
+    assert all(e.on for e in s.effects) and s.honoree is None
+    assert svc.effects_config() == deps.config.effects
+
+
+def test_switching_an_effect_off_zeroes_its_weight_and_survives_a_new_service(svc, deps):
+    svc.set_effects(EffectsUpdate(off=["confetti", "glasses"], honoree="  John "))
+
+    again = WallService(deps)  # a restart: the switches live in the DB
+    cfg = again.effects_config()
+    assert (cfg.weights["confetti"], cfg.weights["glasses"], cfg.weights["vintage"], cfg.honoree) == (0, 0, 25, "John")
+    assert {e.id for e in again.get_effects().effects if not e.on} == {"confetti", "glasses"}
+
+
+def test_switching_on_an_effect_the_config_had_at_zero_uses_its_default_weight(svc, deps):
+    deps.config.effects.weights["wanted"] = 0
+
+    svc.set_effects(EffectsUpdate(off=[]))
+
+    assert svc.effects_config().weights["wanted"] == 10
+
+
+def test_unknown_effect_id_is_rejected(svc):
+    with pytest.raises(UnknownEffect):
+        svc.set_effects(EffectsUpdate(off=["laser_eyes"]))
+
+
+async def test_reroll_all_queues_every_ready_photo(svc, clock):
+    await ready(svc, clock)
+
+    assert svc.reroll_all().queued == 2
+    assert svc.list_photos(None).photos == []
+
+
+async def test_photo_queued_for_a_repick_keeps_serving_its_previous_image(svc, clock):
+    await ready(svc, clock)
+
+    svc.reroll_all()
+
+    assert svc.get_media("a").path.exists()

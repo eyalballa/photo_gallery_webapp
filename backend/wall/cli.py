@@ -53,6 +53,7 @@ def build_deps(c: Ctx, detector: bool = True) -> Deps:
 
     cfg = AppConfig.load(c.config)
     cfg.data_dir.mkdir(parents=True, exist_ok=True)
+    _warn_unknown_effects(cfg)
     if c.source and c.source.startswith("fake:"):
         source = FakePhotoSource(Path(c.source[5:]))
     else:
@@ -67,6 +68,14 @@ def build_deps(c: Ctx, detector: bool = True) -> Deps:
         session_secret=auth.session_secret,
         cookie_secure=auth.cookie_secure,
     )
+
+
+def _warn_unknown_effects(cfg: AppConfig) -> None:
+    from wall.effects import EFFECTS
+
+    if unknown := sorted(set(cfg.effects.weights) - set(EFFECTS)):
+        typer.secho(f"effects.weights: unknown effect(s) {', '.join(unknown)} are ignored; "
+                    f"live effects: {', '.join(sorted(EFFECTS))}", fg="yellow", err=True)
 
 
 def _svc(ctx: typer.Context, detector: bool = False) -> WallService:
@@ -161,6 +170,20 @@ def reroll(ctx: typer.Context, id: Annotated[Optional[str], typer.Option("--id")
     except NotFound:
         raise typer.BadParameter(f"no photo {id}")
     out(ctx, res, f"{res.processed} re-processed, effects: {json.dumps(res.effects)}")
+
+
+@app.command()
+def effects(ctx: typer.Context) -> None:
+    """List the live effects: config.yaml's weights with the settings drawer's switches applied (0 = off)."""
+    from wall.effects import EFFECTS
+
+    _local_only(ctx, "effects")
+    cfg = _svc(ctx).effects_config()
+    typer.echo(f"{'id':<12} {'label':<15} {'weight':>6}  kind")
+    for eid, e in sorted(EFFECTS.items()):
+        kind = "face accessory" if e.accessory else "whole photo"
+        typer.echo(f"{eid:<12} {e.label:<15} {cfg.weights.get(eid, e.weight):>6g}  {kind}")
+    typer.echo(f"cake frame name: {cfg.honoree or '(none)'}")
 
 
 @app.command()
