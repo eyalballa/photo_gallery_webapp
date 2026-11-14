@@ -82,6 +82,7 @@ export function Wall({ client, config, onLocked }: Props) {
       <button className="gear" aria-label="Open settings" aria-expanded={drawerOpen} onClick={toggleDrawer}>⚙</button>
       <div className="hint" style={{ opacity: hint ? 1 : 0 }}>Press S for settings · F for fullscreen</div>
       <SettingsDrawer
+        client={client}
         open={drawerOpen}
         settings={settings}
         onClose={closeDrawer}

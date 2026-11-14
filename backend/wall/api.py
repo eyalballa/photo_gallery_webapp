@@ -2,11 +2,11 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 
-from wall.schemas import LoginRequest, PhotosResponse, PublicConfig, WallConfig
-from wall.service import NotFound, RateLimited, WallService
+from wall.schemas import EffectsSettings, EffectsUpdate, LoginRequest, PhotosResponse, PublicConfig, RerollReport, WallConfig
+from wall.service import NotFound, RateLimited, UnknownEffect, WallService
 
 COOKIE = "wall_session"
 
@@ -49,6 +49,26 @@ def config(svc: WallService = Depends(require_session)) -> WallConfig:
 @router.get("/api/photos", response_model=PhotosResponse)
 def photos(since: datetime | None = None, svc: WallService = Depends(require_session)) -> PhotosResponse:
     return svc.list_photos(since)
+
+
+@router.get("/api/effects", response_model=EffectsSettings)
+def effects(svc: WallService = Depends(require_session)) -> EffectsSettings:
+    return svc.get_effects()
+
+
+@router.put("/api/effects", response_model=EffectsSettings)
+def set_effects(req: EffectsUpdate, svc: WallService = Depends(require_session)) -> EffectsSettings:
+    try:
+        return svc.set_effects(req)
+    except UnknownEffect as e:
+        raise HTTPException(422, f"unknown effect: {e}")
+
+
+@router.post("/api/effects/reroll", response_model=RerollReport)
+def reroll_effects(tasks: BackgroundTasks, svc: WallService = Depends(require_session)) -> RerollReport:
+    report = svc.reroll_all()
+    tasks.add_task(svc.process_pending)  # now, rather than on the next sync pass (up to every_s away)
+    return report
 
 
 @router.get("/media/{photo_id}.jpg", response_class=FileResponse)

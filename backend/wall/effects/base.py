@@ -12,6 +12,8 @@ import resvg_py
 from PIL import Image
 from pydantic import BaseModel
 
+from wall.config import EffectsConfig
+
 ASSETS = Path(__file__).resolve().parents[2] / "assets"
 
 
@@ -55,7 +57,9 @@ class Effect(Protocol):
     weight: float  # default weight, can be overridden by config
     accessory: bool  # True if it draws on faces (skipped for strongly turned faces)
 
-    def apply(self, img: Image.Image, faces: list[Face], rng: Random) -> EffectResult: ...
+    def apply(self, img: Image.Image, faces: list[Face], rng: Random, cfg: EffectsConfig) -> EffectResult:
+        """Draws on `img` in place (same size). `faces` holds only the faces this effect may use."""
+        ...
 
 
 EFFECTS: dict[str, Effect] = {}

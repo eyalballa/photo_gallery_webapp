@@ -9,7 +9,8 @@ from wall.effects.base import Placement, Point, paste_position, stable_seed, up_
 from wall.faces import cut_by_crop, face_from_points, same_face, tiles
 from wall.process import process_one
 
-W = {"glasses": 25, "mustache": 25, "party_hat": 25, "vintage": 25}
+# Only the four original effects on; every other registered effect off, so picks are predictable.
+W = {**{eid: 0 for eid in EFFECTS}, "glasses": 25, "mustache": 25, "party_hat": 25, "vintage": 25}
 
 
 def face(cx=100.0, cy=100.0, eye_dist=40.0, roll=0.0, nose_dx=0.0):
@@ -52,6 +53,12 @@ def test_turned_faces_only_get_non_accessory_effects():
     picks = {choose_effect(f"id{i}", 0, [face(nose_dx=30)], W, 0.35)[0] for i in range(40)}
 
     assert picks == {"vintage"}
+
+
+def test_effect_missing_from_weights_uses_its_default():
+    weights = {eid: 0 for eid in EFFECTS if eid != "confetti"}
+
+    assert choose_effect("x", 0, [face()], weights, 0.35)[0] == "confetti"
 
 
 def test_zero_weight_disables_an_effect():

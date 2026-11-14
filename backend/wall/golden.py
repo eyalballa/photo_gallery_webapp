@@ -50,7 +50,7 @@ def main(src: Path, dst: Path, show_landmarks: bool = False) -> None:
             img = base.copy()
             use = frontal if effect.accessory else faces
             if use:
-                effect.apply(img, use, Random(path.stem))
+                effect.apply(img, use, Random(path.stem), cfg)
             if show_landmarks:
                 d = ImageDraw.Draw(img)
                 for f in faces:

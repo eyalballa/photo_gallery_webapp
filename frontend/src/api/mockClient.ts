@@ -1,5 +1,7 @@
 // Dev-only fake backend (`/?mock`): sample photos as SVG data URLs, plus a "guest upload" every 40 s.
-import type { ConfigResult, LoginResult, PublicConfig, PhotoOut, PhotosResponse, WallClient } from "./client";
+import type {
+  ConfigResult, EffectsSettings, EffectsUpdate, LoginResult, PublicConfig, PhotoOut, PhotosResponse, RerollReport, WallClient,
+} from "./client";
 
 const COLORS = ["#ff5d73", "#ffc145", "#4cc9f0", "#7ae582", "#b388ff", "#e3c193", "#c97b84"];
 
@@ -20,8 +22,16 @@ function samplePhoto(n: number): PhotoOut {
   };
 }
 
+const MOCK_EFFECTS: [string, string, "face" | "photo"][] = [
+  ["big_eyes", "Big eyes", "face"], ["cake_frame", "Cake frame", "photo"], ["circus_glasses", "Circus glasses", "face"], ["confetti", "Confetti", "photo"],
+  ["glasses", "Glasses", "face"], ["mustache", "Mustache", "face"], ["party_hat", "Party hat", "face"],
+  ["pop_art", "Pop art", "photo"], ["sketch", "Pencil sketch", "photo"],
+  ["vintage", "Vintage", "photo"], ["wanted", "Wanted poster", "photo"],
+];
+
 export class MockWallClient implements WallClient {
   private readonly started = Date.now();
+  private effectsState: EffectsUpdate = { off: [], honoree: null };
 
   async login(): Promise<LoginResult> {
     return "ok";
@@ -51,5 +61,19 @@ export class MockWallClient implements WallClient {
       .filter((n) => arrived(n) > from)
       .map(samplePhoto);
     return { photos, removed: [], server_time: new Date(now).toISOString() };
+  }
+
+  async effects(): Promise<EffectsSettings> {
+    const { off, honoree } = this.effectsState;
+    return { effects: MOCK_EFFECTS.map(([id, label, kind]) => ({ id, label, kind, on: !off.includes(id) })), honoree: honoree ?? null };
+  }
+
+  async setEffects(update: EffectsUpdate): Promise<EffectsSettings> {
+    this.effectsState = update;
+    return this.effects();
+  }
+
+  async rerollEffects(): Promise<RerollReport> {
+    return { queued: 12 };
   }
 }
