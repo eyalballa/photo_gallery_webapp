@@ -1,10 +1,13 @@
 import type { ChangeEvent } from "react";
+import type { WallClient } from "../api/client";
 import { backgroundsFor } from "../backgrounds";
 import { getTheme, THEMES } from "../themes";
 import type { SettingsOverrides, WallSettings } from "../types";
+import { EffectsSection } from "./EffectsSection";
 import { goFullscreen } from "./useKiosk";
 
 interface Props {
+  client: WallClient;
   open: boolean;
   settings: WallSettings;
   onClose(): void;
@@ -37,7 +40,7 @@ function Options({ name, options, value, onPick }: { name: string; options: Opti
 }
 
 /** S opens it. Changes are saved in this browser, on top of the config file's defaults. */
-export function SettingsDrawer({ open, settings, onClose, onChange, onImage, onReset, photoCount }: Props) {
+export function SettingsDrawer({ client, open, settings, onClose, onChange, onImage, onReset, photoCount }: Props) {
   const theme = getTheme(settings.theme);
   const onFile = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,7 +58,7 @@ export function SettingsDrawer({ open, settings, onClose, onChange, onImage, onR
         <h2>Wall settings</h2>
         <button className="btn ghost" onClick={onClose}>Close</button>
       </header>
-      <p className="note">Saved in this browser, on top of the config file. Press S to toggle, F for fullscreen.</p>
+      <p className="note">Saved in this browser, on top of the config file (except photo effects). Press S to toggle, F for fullscreen.</p>
 
       <section>
         <h3>Theme</h3>
@@ -92,6 +95,8 @@ export function SettingsDrawer({ open, settings, onClose, onChange, onImage, onR
             onChange={(e) => onChange({ decorations: e.target.checked })} />
         </div>
       </section>
+
+      <EffectsSection client={client} open={open} />
 
       <section>
         <div className="btns">

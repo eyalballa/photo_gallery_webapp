@@ -29,7 +29,7 @@ def process_one(
             faces = [f for f in faces if abs(f.yaw) <= cfg.max_yaw]
         canvas = img.copy()
         try:
-            result = EFFECTS[effect_id].apply(canvas, faces, rng)
+            result = EFFECTS[effect_id].apply(canvas, faces, rng, cfg)
             img, variant, aged = canvas, result.variant, result.aged_paper
         except Exception as e:  # an effect bug must not cost us the photo
             log.exception("effect %s failed on %s", effect_id, photo_id)

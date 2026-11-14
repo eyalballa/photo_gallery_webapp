@@ -4,7 +4,9 @@ import type { CardLayout, CardState, QueueEntry, Viewport, WallPhoto } from "../
 
 export type Rng = () => number;
 
-export const GAP_FRACTION = 0.04;
+/** Each card's gap to the next one, as a fraction of the width, drawn at random so the spacing isn't uniform. */
+export const GAP_MIN_FRACTION = 0.02;
+export const GAP_MAX_FRACTION = 0.12;
 export const EXIT_MARGIN_PX = 60;
 export const ENTRY_OFFSET_PX = 10;
 
@@ -87,7 +89,7 @@ export function cardDurationMs(card: CardState): number {
   return ((card.x0 - card.x1) / card.v) * 1000;
 }
 
-/** The last card has fully entered plus a 4% gap. Spacing alone decides, so how many photos are on
+/** The last card has fully entered plus its own random gap (2–12% of the width). Spacing alone decides, so how many photos are on
  * screen follows the screen's width and the photos' shapes: a fixed maximum left holes whenever narrow
  * (portrait) cards needed more than the maximum to fill the screen.
  * If the speed went up since the last card entered (settings drawer, resize), also wait until the
@@ -95,9 +97,8 @@ export function cardDurationMs(card: CardState): number {
 export function canSpawn(cards: readonly CardState[], env: SchedulerEnv): boolean {
   const last = cards[cards.length - 1];
   if (!last) return true;
-  const gap = env.viewport.width * GAP_FRACTION;
   const trailing = cardX(last, env.now) + last.layout.cardW;
-  if (trailing > env.viewport.width - gap) return false;
+  if (trailing > env.viewport.width - last.gap) return false;
   const v = driftSpeed(env.viewport, env.crossingSeconds);
   if (v <= last.v) return true;
   const exitS = (cardX(last, env.now) - last.x1) / last.v;
@@ -122,6 +123,7 @@ export function createCard(
     x1: -layout.cardW - EXIT_MARGIN_PX,
     v: driftSpeed(env.viewport, env.crossingSeconds),
     startedAt: env.now,
+    gap: env.viewport.width * (GAP_MIN_FRACTION + rng() * (GAP_MAX_FRACTION - GAP_MIN_FRACTION)),
   };
   return {
     card,
@@ -166,7 +168,6 @@ export function tick(
 /** Startup: place cards mid-flight from 3% of the width to the right edge so the first frame is a full wall.
  * (Stopping at 80% left a hole of up to a quarter of the screen until it scrolled away.) */
 export function seed(state: SchedulerState, photos: readonly WallPhoto[], env: SchedulerEnv): SchedulerState {
-  const gap = env.viewport.width * GAP_FRACTION;
   let x = env.viewport.width * 0.03;
   let next = state;
   while (x < env.viewport.width) {
@@ -174,7 +175,7 @@ export function seed(state: SchedulerState, photos: readonly WallPhoto[], env: S
     if (!photo) break;
     const made = createCard(picked, env, photo, x);
     next = made.state;
-    x += made.card.layout.cardW + gap;
+    x += made.card.layout.cardW + made.card.gap;
   }
   return next;
 }

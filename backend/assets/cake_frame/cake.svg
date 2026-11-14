@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160">
+  <!-- one tile of the cake band: frosted top, two sponge layers with a filling, sprinkles, bead piping at the foot.
+       Tiles horizontally (every shape is inside the tile or wraps at x=0/200). Tokens are recoloured in code. -->
+  <rect x="0" y="20" width="200" height="140" fill="SPONGE"/>
+  <rect x="0" y="82" width="200" height="16" fill="CREAM"/>
+  <path d="M0 82 H200 M0 98 H200" stroke="SPONGE_LO" stroke-width="3"/>
+  <g fill="SPONGE_LO" opacity=".55">
+    <circle cx="22" cy="60" r="3"/><circle cx="64" cy="70" r="2.5"/><circle cx="104" cy="56" r="3"/>
+    <circle cx="146" cy="68" r="2.5"/><circle cx="182" cy="58" r="3"/><circle cx="40" cy="116" r="3"/>
+    <circle cx="86" cy="124" r="2.5"/><circle cx="128" cy="114" r="3"/><circle cx="170" cy="126" r="2.5"/>
+  </g>
+  <path fill="FROST" stroke="FROST_LO" stroke-width="3" d="M-10 -4 H210 V30 L200 30 Q190 30 186 36 C184 40 184 44 184 48 A8 8 0 0 1 168 48 C168 40 166 32 156 31 Q140 30 130 34 C126 36 126 40 126 44 V56 A8 8 0 0 1 110 56 V42 C110 36 106 31 96 31 Q76 30 64 33 C58 35 58 40 58 44 A8 8 0 0 1 42 44 C42 38 40 32 30 31 Q10 30 0 30 L-10 30 Z"/>
+  <g fill="none" stroke="FROST_HI" stroke-width="4" stroke-linecap="round" opacity=".85">
+    <path d="M0 9 Q50 4 100 9 T200 9"/><path d="M175 40 v6"/><path d="M117 44 v8"/><path d="M49 38 v4"/>
+  </g>
+  <g stroke-width="4" stroke-linecap="round">
+    <path d="M14 20 l7 -3" stroke="#ffd23f"/><path d="M40 14 l2 7" stroke="#4dabf7"/>
+    <path d="M72 22 l8 1" stroke="#ff6b6b"/><path d="M98 15 l-5 5" stroke="#63e6be"/>
+    <path d="M126 22 l7 -3" stroke="#9775fa"/><path d="M152 14 l3 7" stroke="#ffd23f"/>
+    <path d="M182 21 l-7 2" stroke="#ff6b6b"/>
+  </g>
+  <rect x="0" y="146" width="200" height="14" fill="FROST_LO"/>
+  <g fill="FROST" stroke="FROST_LO" stroke-width="3">
+    <circle cx="0" cy="146" r="11"/><circle cx="25" cy="146" r="11"/><circle cx="50" cy="146" r="11"/>
+    <circle cx="75" cy="146" r="11"/><circle cx="100" cy="146" r="11"/><circle cx="125" cy="146" r="11"/>
+    <circle cx="150" cy="146" r="11"/><circle cx="175" cy="146" r="11"/><circle cx="200" cy="146" r="11"/>
+  </g>
+  <g fill="FROST_HI"><circle cx="-3" cy="142" r="3"/><circle cx="22" cy="142" r="3"/><circle cx="47" cy="142" r="3"/>
+    <circle cx="72" cy="142" r="3"/><circle cx="97" cy="142" r="3"/><circle cx="122" cy="142" r="3"/>
+    <circle cx="147" cy="142" r="3"/><circle cx="172" cy="142" r="3"/><circle cx="197" cy="142" r="3"/></g>
+</svg>

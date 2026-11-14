@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { CardState, Viewport, WallPhoto } from "../types";
 import {
   canSpawn,
+  createCard,
   driftSpeed,
   initialState,
   layoutCard,
@@ -27,7 +28,7 @@ const card = (over: Partial<CardState>): CardState => ({
   key: 1, photoId: "p", showNewMarker: false,
   layout: { imgW: 0, imgH: 0, pad: 0, padB: 0, cardW: 500, cardH: 0, y: 0 },
   bob: { durationS: 5, delayS: 0, r1Deg: 0, r2Deg: 0 },
-  x0: 1610, x1: -560, v: 100, startedAt: 0, ...over,
+  x0: 1610, x1: -560, v: 100, startedAt: 0, gap: 64, ...over,
 });
 const sequence = (...values: number[]) => () => values.shift() ?? 0;
 
@@ -88,10 +89,13 @@ describe("canSpawn", () => {
     expect(canSpawn(narrow, env())).toBe(true);
   });
 
-  it("waits until the last card has fully entered plus a 4% gap", () => {
+  it("waits until the last card has fully entered plus its gap", () => {
     // Trailing edge must reach 1600 - 64 = 1536: x0 1610 → 1036 takes 5.74 s at 100 px/s.
     expect(canSpawn([card({})], env({ now: 5000 }))).toBe(false);
     expect(canSpawn([card({})], env({ now: 6000 }))).toBe(true);
+    // A wider gap (192 px, 12%) waits longer: trailing edge 1408 at 7.02 s.
+    expect(canSpawn([card({ gap: 192 })], env({ now: 6000 }))).toBe(false);
+    expect(canSpawn([card({ gap: 192 })], env({ now: 7100 }))).toBe(true);
   });
 
   it("after a speed-up, waits until the faster card can't catch the last one before it leaves", () => {
@@ -144,12 +148,19 @@ describe("tick", () => {
   });
 });
 
+describe("createCard", () => {
+  it("draws each card's gap between 2% and 12% of the width", () => {
+    const gap = (r: number) => createCard(initialState(true), env({ rng: () => r }), photo("a"), 0).card.gap;
+    expect([gap(0), gap(0.5), gap(0.999999)].map(Math.round)).toEqual([32, 112, 192]);
+  });
+});
+
 describe("seed", () => {
-  it("places cards mid-flight from 3% of the width with 4% gaps, up to the right edge", () => {
-    // Narrow (3:4) cards: 409 px wide + a 64 px gap. The fourth starts at 1468, past the old 80% cut-off (1280).
+  it("places cards mid-flight from 3% of the width with each card's gap, up to the right edge", () => {
+    // Narrow (3:4) cards: 409 px wide + a 112 px gap (7%, rng 0.5). A fourth would start at 1611, off screen.
     const photos = ["a", "b", "c", "d", "e"].map((id) => ({ ...photo(id), width: 750 }));
     const state = seed(initialState(true), photos, env());
-    expect(state.cards.map((c) => Math.round(c.x0))).toEqual([48, 521, 994, 1468]);
+    expect(state.cards.map((c) => Math.round(c.x0))).toEqual([48, 569, 1090]);
   });
 });
 
